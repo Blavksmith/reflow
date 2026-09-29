@@ -1,0 +1,22 @@
+@theme {
+    --color-ink-950: #10213b;
+    --color-ink-800: #1c3554;
+    --color-ink-600: #5f7694;
+    --color-ink-400: #91a2b7;
+    --color-sky-50: #f7fafe;
+    --color-sky-100: #eff6fd;
+    --color-sky-200: #dcecfb;
+    --color-sky-500: #2c7fe3;
+    --color-navy-900: #102744;
+    --color-success: #14966c;
+    --color-success-soft: #e7f6ef;
+    --color-warning: #b87512;
+    --color-warning-soft: #fff3dd;
+    --color-danger: #d94e5e;
+    --color-danger-soft: #fdebed;
+    --font-sans:
+        Raleway, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    --shadow-soft: 0 10px 30px rgba(35, 76, 116, 0.06);
+    --shadow-control: 0 8px 18px rgba(16, 39, 68, 0.14);
+}
