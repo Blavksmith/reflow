@@ -6,23 +6,27 @@ A calm, editorial visual language for deep work. The system uses generous space,
 
 ### Color tokens
 
-| Token          | Value     | Usage                                  |
-| -------------- | --------- | -------------------------------------- |
-| `ink-950`      | `#10213B` | Headings, primary text                 |
-| `ink-800`      | `#1C3554` | Body emphasis                          |
-| `ink-600`      | `#5F7694` | Supporting text                        |
-| `ink-400`      | `#91A2B7` | Tertiary text, disabled states         |
-| `sky-50`       | `#F7FAFE` | Application background                 |
-| `sky-100`      | `#EFF6FD` | Soft surfaces and active navigation    |
-| `sky-200`      | `#DCECFB` | Borders, focus illustrations           |
-| `sky-500`      | `#2C7FE3` | Primary action and links               |
-| `navy-900`     | `#102744` | Primary button and active navigation   |
-| `success`      | `#14966C` | Completed status                       |
-| `success-soft` | `#E7F6EF` | Completed status surface               |
-| `warning`      | `#B87512` | Ended early / attention                |
-| `warning-soft` | `#FFF3DD` | Attention surface                      |
-| `danger`       | `#D94E5E` | Interruptions and destructive feedback |
-| `danger-soft`  | `#FDEBED` | Error surface                          |
+| Token                  | Value                                                            | Usage                                  |
+| ---------------------- | ---------------------------------------------------------------- | -------------------------------------- |
+| `ink-950`              | `#10213B`                                                        | Headings, primary text                 |
+| `ink-800`              | `#1C3554`                                                        | Body emphasis                          |
+| `ink-600`              | `#5F7694`                                                        | Supporting text                        |
+| `ink-400`              | `#91A2B7`                                                        | Tertiary text, disabled states         |
+| `sky-50`               | `#F7FAFE`                                                        | Very light blue surfaces               |
+| `pale-blue`            | `#E5F0FC`                                                        | Legacy solid blue surface              |
+| `page-gradient`        | `linear-gradient(135deg, #F7FAFD 0%, #EEF5FB 45%, #E3EFF9 100%)` | Global page background                 |
+| `sky-100`              | `#EFF6FD`                                                        | Soft surfaces and active navigation    |
+| `focus-card-blue`      | `#DFEEFE`                                                        | Shared focus card surface              |
+| `primary-cta-gradient` | `linear-gradient(135deg, #2176E8 0%, #4D91F3 100%)`              | Primary call-to-action surface         |
+| `sky-200`              | `#DCECFB`                                                        | Borders, focus illustrations           |
+| `sky-500`              | `#2C7FE3`                                                        | Primary action and links               |
+| `navy-900`             | `#102744`                                                        | Primary button and active navigation   |
+| `success`              | `#14966C`                                                        | Completed status                       |
+| `success-soft`         | `#E7F6EF`                                                        | Completed status surface               |
+| `warning`              | `#B87512`                                                        | Ended early / attention                |
+| `warning-soft`         | `#FFF3DD`                                                        | Attention surface                      |
+| `danger`               | `#D94E5E`                                                        | Interruptions and destructive feedback |
+| `danger-soft`          | `#FDEBED`                                                        | Error surface                          |
 
 Avoid using more than one saturated accent in a single component. Status colors communicate state, never performance judgement.
 

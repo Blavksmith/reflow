@@ -1,13 +1,14 @@
 interface ReflowCharacterProps {
   className?: string;
   size?: "small" | "large";
-  variant?: "logo" | "hero" | "card";
+  variant?: "logo" | "hero" | "card" | "session";
 }
 
 const sources = {
   logo: "/assets/reflow-logo.png",
   hero: "/assets/reflow-character-hero.png",
   card: "/assets/reflow-character-card.png",
+  session: "/assets/character.png",
 };
 
 export function ReflowCharacter({

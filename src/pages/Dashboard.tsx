@@ -61,7 +61,7 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,.95fr)]">
         <section
-          className="relative min-h-[323px] overflow-hidden rounded-2xl bg-[#dfeefe] px-8 py-7 shadow-soft sm:px-9"
+          className="relative min-h-[323px] overflow-hidden rounded-2xl bg-focus-card-blue px-8 py-7 shadow-soft sm:px-9"
           aria-labelledby="focus-heading"
         >
           <div className="relative z-10 max-w-[535px]">

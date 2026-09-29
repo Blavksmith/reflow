@@ -4,7 +4,20 @@
     --color-ink-600: #5f7694;
     --color-ink-400: #91a2b7;
     --color-sky-50: #f7fafe;
+    --color-pale-blue: #e5f0fc;
+    --background-image-page-gradient: linear-gradient(
+        135deg,
+        #f7fafd 0%,
+        #eef5fb 45%,
+        #e3eff9 100%
+    );
     --color-sky-100: #eff6fd;
+    --color-focus-card-blue: #dfeefe;
+    --background-image-primary-cta-gradient: linear-gradient(
+        135deg,
+        #2176e8 0%,
+        #4d91f3 100%
+    );
     --color-sky-200: #dcecfb;
     --color-sky-500: #2c7fe3;
     --color-navy-900: #102744;

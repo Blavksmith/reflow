@@ -4,7 +4,7 @@
 
 :root {
     color: #10213b;
-    background: #f7fafe;
+    background: var(--background-image-page-gradient);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
 }

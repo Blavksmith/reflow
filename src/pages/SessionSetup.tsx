@@ -1,8 +1,8 @@
 import { type FormEvent, type ReactNode, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  BarChart3,
   Camera,
+  Check,
   ChevronRight,
   FileText,
   Leaf,
@@ -15,6 +15,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { ReflowCharacter } from "../components/ReflowCharacter";
 import { cn } from "../lib/utils";
 
 const durationOptions = [15, 25, 45, 60] as const;
@@ -67,14 +68,17 @@ function Toggle({
   checked,
   onChange,
   label,
+  id,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
+  id?: string;
 }) {
   return (
     <button
       type="button"
+      id={id}
       role="switch"
       aria-checked={checked}
       aria-label={label}
@@ -128,18 +132,25 @@ export function SessionSetup() {
 
   return (
     <div className="relative isolate min-h-[calc(100vh-92px)] overflow-hidden">
-      <img
-        src="/assets/focus-horizon.png"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute right-[-20%] top-8 -z-10 w-[76%] max-w-none opacity-45"
-      />
-
       <div className="mx-auto max-w-[1320px] px-6 pb-12 pt-8 lg:px-10 xl:px-12">
-        <header className="relative mb-8 max-w-[950px]">
-          <p className="mb-3 text-[13px] font-bold uppercase tracking-[0.1em] text-sky-500">
-            Session setup
-          </p>
+        <header className="relative z-10 mb-8 max-w-[950px]">
+          <div className="mb-3 flex items-center gap-3">
+            <p className="text-[13px] font-bold uppercase tracking-[0.1em] text-sky-500">
+              Session setup
+            </p>
+            <span className="h-px w-8 bg-sky-200" aria-hidden="true" />
+            <div className="flex items-center gap-1.5" aria-label="Step 1 of 4">
+              {[0, 1, 2, 3].map((step) => (
+                <span
+                  key={step}
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    step === 0 ? "bg-sky-500" : "bg-sky-200",
+                  )}
+                />
+              ))}
+            </div>
+          </div>
           <h1 className="text-[36px] font-semibold leading-[1.1] tracking-[-0.05em] text-ink-950 sm:text-[44px]">
             Let&apos;s set up your focus session
           </h1>
@@ -162,23 +173,30 @@ export function SessionSetup() {
               <label className="sr-only" htmlFor="focus-goal">
                 Focus goal
               </label>
-              <input
-                id="focus-goal"
-                type="text"
-                value={goal}
-                maxLength={100}
-                onChange={(event) => {
-                  setGoal(event.target.value);
-                  setShowValidation(false);
-                }}
-                placeholder="e.g. Finish the design system documentation"
-                className={cn(
-                  "h-14 w-full rounded-xl border bg-white px-4 text-[15px] text-ink-950 outline-none transition-colors placeholder:text-ink-600/75 focus:border-sky-500 focus:ring-4 focus:ring-sky-100",
-                  showValidation && !goal.trim()
-                    ? "border-danger"
-                    : "border-slate-200",
-                )}
-              />
+              <div className="relative">
+                <Sparkles
+                  size={17}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sky-500"
+                />
+                <input
+                  id="focus-goal"
+                  type="text"
+                  value={goal}
+                  maxLength={100}
+                  onChange={(event) => {
+                    setGoal(event.target.value);
+                    setShowValidation(false);
+                  }}
+                  placeholder="e.g. Finish the design system documentation"
+                  className={cn(
+                    "h-14 w-full rounded-xl border bg-white pl-11 pr-4 text-[15px] text-ink-950 outline-none transition-colors placeholder:text-ink-600/75 focus:border-sky-500 focus:ring-4 focus:ring-sky-100",
+                    showValidation && !goal.trim()
+                      ? "border-danger"
+                      : "border-slate-200",
+                  )}
+                />
+              </div>
               <div className="mt-1 flex justify-between text-[12px] text-ink-600">
                 <span>
                   {showValidation && !goal.trim()
@@ -202,12 +220,17 @@ export function SessionSetup() {
                     aria-pressed={duration === option}
                     onClick={() => setDuration(option)}
                     className={cn(
-                      "flex min-h-[76px] flex-col items-center justify-center rounded-xl border px-2 py-3 transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200",
+                      "relative flex min-h-[76px] flex-col items-center justify-center rounded-xl border px-2 py-3 transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200",
                       duration === option
                         ? "border-sky-500 bg-sky-50 text-sky-500"
                         : "border-slate-200 text-ink-950 hover:border-sky-200 hover:bg-sky-50/50",
                     )}
                   >
+                    {duration === option && (
+                      <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-white">
+                        <Check size={13} strokeWidth={3} />
+                      </span>
+                    )}
                     <strong className="text-[19px] leading-none">
                       {option}
                     </strong>
@@ -219,12 +242,17 @@ export function SessionSetup() {
                   aria-pressed={duration === 0}
                   onClick={() => setDuration(0)}
                   className={cn(
-                    "flex min-h-[76px] flex-col items-center justify-center rounded-xl border px-2 py-3 transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200",
+                    "relative flex min-h-[76px] flex-col items-center justify-center rounded-xl border px-2 py-3 transition-colors focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200",
                     duration === 0
                       ? "border-sky-500 bg-sky-50 text-sky-500"
                       : "border-slate-200 text-ink-950 hover:border-sky-200 hover:bg-sky-50/50",
                   )}
                 >
+                  {duration === 0 && (
+                    <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-white">
+                      <Check size={13} strokeWidth={3} />
+                    </span>
+                  )}
                   <SlidersHorizontal size={19} />
                   <span className="mt-2 text-[12px]">Custom</span>
                 </button>
@@ -277,12 +305,17 @@ export function SessionSetup() {
                     aria-pressed={audioCategory === value}
                     onClick={() => setAudioCategory(value)}
                     className={cn(
-                      "flex min-h-[70px] flex-col items-center justify-center rounded-xl border px-2 py-2 text-[12px] transition-colors disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200",
+                      "relative flex min-h-[70px] flex-col items-center justify-center rounded-xl border px-2 py-2 text-[12px] transition-colors disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200",
                       audioCategory === value && audioEnabled
                         ? "border-sky-500 bg-sky-50 text-sky-500"
                         : "border-slate-200 text-ink-600 hover:border-sky-200 hover:bg-sky-50/50",
                     )}
                   >
+                    {audioCategory === value && audioEnabled && (
+                      <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-white">
+                        <Check size={13} strokeWidth={3} />
+                      </span>
+                    )}
                     <Icon size={19} />
                     <span className="mt-2">{label}</span>
                   </button>
@@ -333,6 +366,7 @@ export function SessionSetup() {
                   checked={cameraEnabled}
                   onChange={setCameraEnabled}
                   label="Enable camera monitoring"
+                  id="camera-monitoring-toggle"
                 />
               </div>
               <div className="mt-4 flex items-start gap-3 rounded-xl bg-sky-50 px-4 py-3 text-[12px] leading-relaxed text-ink-600">
@@ -356,9 +390,19 @@ export function SessionSetup() {
 
           <aside className="flex flex-col gap-5 xl:sticky xl:top-5 xl:self-start">
             <section
-              className="rounded-[18px] border border-slate-200/70 bg-white/90 p-5 shadow-soft sm:p-6"
+              className="relative rounded-[18px] border border-slate-200/70 bg-white/90 p-5 shadow-soft sm:p-6"
               aria-labelledby="recommendation-heading"
             >
+              <div
+                className="pointer-events-none absolute -right-8 -top-36 z-10 hidden md:block xl:-right-12 xl:-top-44"
+                aria-hidden="true"
+              >
+                <ReflowCharacter
+                  size="large"
+                  variant="session"
+                  className="h-40 w-60 object-contain object-bottom xl:h-52 xl:w-72"
+                />
+              </div>
               <div className="flex items-start gap-4">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-500">
                   <Sparkles size={23} />
@@ -378,25 +422,23 @@ export function SessionSetup() {
               <button
                 type="button"
                 onClick={() => setDuration(25)}
-                className="group relative mt-4 min-h-[128px] w-full overflow-hidden rounded-2xl bg-sky-50 p-5 text-left transition-colors hover:bg-sky-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
+                className="group relative isolate mt-4 min-h-[128px] w-full overflow-hidden rounded-2xl border border-sky-200/60 bg-focus-card-blue p-5 text-left transition-shadow focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
               >
+                <img
+                  src="/assets/mountain-duo.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-4 -bottom-4 z-0 h-[165px] w-[85%] max-w-none object-contain object-right-bottom opacity-75"
+                />
+
                 <span className="relative z-10 block text-[30px] font-semibold tracking-[-0.045em] text-ink-950">
                   25 minutes
                 </span>
+
                 <span className="relative z-10 mt-1 block max-w-[250px] text-[15px] leading-relaxed text-ink-600">
                   A 25-minute session may help you stay focused and productive
                   today.
                 </span>
-                <BarChart3
-                  className="absolute right-6 top-8 text-sky-500"
-                  size={34}
-                />
-                <img
-                  src="/assets/focus-horizon.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute -bottom-12 -right-24 w-[115%] max-w-none opacity-60"
-                />
               </button>
             </section>
 
@@ -404,19 +446,23 @@ export function SessionSetup() {
               className="rounded-[18px] border border-slate-200/70 bg-white/90 p-5 shadow-soft sm:p-6"
               aria-labelledby="summary-heading"
             >
-              <h2
-                id="summary-heading"
-                className="text-[18px] font-semibold text-ink-950"
-              >
-                Session summary
-              </h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2
+                  id="summary-heading"
+                  className="text-[18px] font-semibold text-ink-950"
+                >
+                  Session summary
+                </h2>
+              </div>
               <p className="mt-1 text-[14px] text-ink-600">
                 Review your setup before starting.
               </p>
               <dl className="mt-4 divide-y divide-slate-100">
                 <div className="flex gap-3 py-3 first:pt-0">
-                  <FileText size={20} className="mt-0.5 text-sky-500" />
-                  <div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-500">
+                    <FileText size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
                     <dt className="text-[13px] font-semibold text-ink-950">
                       Goal
                     </dt>
@@ -426,11 +472,10 @@ export function SessionSetup() {
                   </div>
                 </div>
                 <div className="flex gap-3 py-3">
-                  <SlidersHorizontal
-                    size={20}
-                    className="mt-0.5 text-sky-500"
-                  />
-                  <div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-500">
+                    <SlidersHorizontal size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
                     <dt className="text-[13px] font-semibold text-ink-950">
                       Duration
                     </dt>
@@ -440,8 +485,10 @@ export function SessionSetup() {
                   </div>
                 </div>
                 <div className="flex gap-3 py-3">
-                  <Mic2 size={20} className="mt-0.5 text-sky-500" />
-                  <div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-500">
+                    <Mic2 size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
                     <dt className="text-[13px] font-semibold text-ink-950">
                       Audio
                     </dt>
@@ -453,8 +500,10 @@ export function SessionSetup() {
                   </div>
                 </div>
                 <div className="flex gap-3 py-3 last:pb-0">
-                  <Camera size={20} className="mt-0.5 text-sky-500" />
-                  <div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-500">
+                    <Camera size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
                     <dt className="text-[13px] font-semibold text-ink-950">
                       Camera monitoring
                     </dt>
@@ -470,7 +519,7 @@ export function SessionSetup() {
               <button
                 type="submit"
                 disabled={!goal.trim() || selectedDuration < 1}
-                className="inline-flex min-h-14 items-center justify-center gap-4 rounded-xl bg-sky-500 px-5 text-[16px] font-semibold text-white shadow-control transition-colors hover:bg-[#216fc9] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-ink-400 disabled:shadow-none focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
+                className="inline-flex min-h-14 items-center justify-center gap-4 rounded-xl bg-primary-cta-gradient px-5 text-[16px] font-semibold text-white shadow-control transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:bg-none disabled:text-ink-400 disabled:shadow-none focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
               >
                 <Play size={20} fill="currentColor" />
                 Start Session

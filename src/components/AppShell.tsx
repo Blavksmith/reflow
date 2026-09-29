@@ -4,7 +4,7 @@ import { TopNav } from "./TopNav";
 
 export function AppShell() {
   return (
-    <div className="min-h-screen bg-sky-50 text-ink-950">
+    <div className="min-h-screen bg-page-gradient text-ink-950">
       <TopNav />
       <div className="flex min-h-[calc(100vh-92px)] items-stretch">
         <Sidebar />
