@@ -1,5 +1,5 @@
 import { Bell, Search } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { ReflowCharacter } from "./ReflowCharacter";
 
 const links = [
@@ -11,6 +11,8 @@ const links = [
 ];
 
 export function TopNav() {
+  const location = useLocation();
+
   return (
     <header className="flex h-[92px] items-center justify-between gap-8 px-6 lg:px-10">
       <NavLink
@@ -31,9 +33,13 @@ export function TopNav() {
           <NavLink
             key={link.to}
             to={link.to}
-            className={({ isActive }) =>
-              `rounded-full border px-5 py-3 text-[14px] font-medium transition-colors ${isActive ? "border-navy-900 bg-navy-900 text-white shadow-control" : "border-slate-200/70 bg-white/50 text-ink-800 hover:border-sky-200 hover:bg-sky-100"}`
-            }
+            className={({ isActive }) => {
+              const focusIsActive =
+                link.label === "Focus Session" &&
+                location.pathname.startsWith("/session");
+              const active = isActive || focusIsActive;
+              return `rounded-full border px-5 py-3 text-[14px] font-medium transition-colors ${active ? "border-navy-900 bg-navy-900 text-white shadow-control" : "border-slate-200/70 bg-white/50 text-ink-800 hover:border-sky-200 hover:bg-sky-100"}`;
+            }}
           >
             {link.label}
           </NavLink>

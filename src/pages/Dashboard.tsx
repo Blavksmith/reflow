@@ -37,15 +37,15 @@ const sessionIcons = [FileText, FileText, Clock3];
 export function Dashboard() {
   return (
     <div className="mx-auto max-w-[1320px] px-6 pb-12 pt-9 lg:px-10 xl:px-12">
-      <header className="mb-6 flex items-start justify-between gap-8">
-        <div>
-          <p className="mb-3 text-[14px] font-semibold text-ink-600">
-            Tuesday, September 21, 2026
+      <header className="relative z-10 mb-8 flex items-start justify-between gap-8">
+        <div className="max-w-[950px]">
+          <p className="font-inter mb-4 text-[13px] font-bold uppercase tracking-[0.1em] text-sky-500">
+            Tuesday, 21 Sept 2026
           </p>
-          <h1 className="text-[38px] font-semibold leading-tight tracking-[-0.05em] text-ink-950 sm:text-[44px]">
+          <h1 className="text-[42px] font-semibold leading-[1.08] tracking-[-0.05em] text-ink-950 sm:text-[56px]">
             Welcome back, Maya!
           </h1>
-          <p className="mt-2 text-[17px] text-ink-600">
+          <p className="mt-4 text-[18px] leading-relaxed text-ink-600">
             A focused day is a collection of small, intentional moments.
           </p>
         </div>
@@ -338,17 +338,29 @@ export function Dashboard() {
               </button>
             </div>
           </section>
-          <section className="relative min-h-[130px] overflow-hidden rounded-2xl bg-[#eaf2fb] bg-[linear-gradient(115deg,rgba(255,251,241,0.94),rgba(234,242,251,0.62)),url('/assets/bg.png')] bg-cover bg-[center_bottom] px-6 py-5 shadow-soft">
-            <h2 className="relative z-10 max-w-[180px] text-[17px] font-semibold leading-tight text-ink-950">
-              A calmer mind leads to a brighter day.
-            </h2>
-            <p className="relative z-10 mt-3 text-[12px] text-ink-600">
-              Focus. Recover. Grow.
-            </p>
+          <section className="relative isolate min-h-[150px] overflow-hidden rounded-[18px] border border-sky-200/70 bg-[#eaf2fb] shadow-soft">
+            <img
+              src="/assets/bg.png"
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover object-bottom opacity-90"
+            />
+            <div
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(255,251,241,0.96)_0%,rgba(255,251,241,0.72)_38%,rgba(234,242,251,0.18)_75%,rgba(234,242,251,0)_100%)]"
+              aria-hidden="true"
+            />
+            <div className="relative z-10 px-6 py-5">
+              <h2 className="max-w-[180px] text-[17px] font-semibold leading-tight text-ink-950">
+                A calmer mind leads to a brighter day.
+              </h2>
+              <p className="mt-3 text-[12px] text-ink-600">
+                Focus. Recover. Grow.
+              </p>
+            </div>
             <ReflowCharacter
               size="large"
               variant="card"
-              className="absolute -bottom-1 right-5"
+              className="pointer-events-none absolute -bottom-4 right-3 z-10 h-32 w-32 object-contain"
             />
           </section>
         </aside>

@@ -69,3 +69,23 @@ Avoid using more than one saturated accent in a single component. Status colors 
 ### Illustration direction
 
 Use abstract horizons, clouds, and soft geometric forms. The Reflow character is a friendly supporting mark, not a mascot that dominates the experience. Do not use illustration to convey productivity scores or judgement.
+
+## Page headers
+
+Use the same core header recipe across page types so navigation feels consistent while preserving page-specific content.
+
+### Core recipe
+
+- Container: `max-w-[1320px]`, `pt-8`, horizontal padding `px-6` with `lg:px-10` and `xl:px-12`.
+- Header spacing: `mb-8`; keep the header content column at `max-w-[950px]` when a supporting visual sits beside it.
+- Eyebrow/date label: `font-inter` (Inter with system sans fallback), `13px`, `font-bold`, uppercase, `tracking-[0.1em]`, `text-sky-500`, with `mb-4` before the page heading.
+- Page heading: `text-[42px]` on small screens and `sm:text-[56px]`, `font-semibold`, `leading-[1.08]`, `tracking-[-0.05em]`, `text-ink-950`.
+- Subtitle: `mt-4`, `text-[18px]`, `leading-relaxed`, `text-ink-600`.
+
+### Progress indicator
+
+The session flow uses exactly three dots: setup is step 1 of 3, focus is step 2 of 3, and summary is step 3 of 3. Use `h-1.5 w-1.5`, `gap-1.5`, active `bg-sky-500`, and inactive `bg-sky-200`, with an accessible `aria-label` describing the current step. The Dashboard uses the same core typography and spacing but does not show progress dots because it is not part of the session flow.
+
+### Page-specific content
+
+Keep the page label and heading copy relevant to the page. Dashboard may retain its date, supporting quote, and hero character on the right; session pages may retain their session label and three-dot progress indicator. These content differences must not change the shared typography scale or vertical rhythm.

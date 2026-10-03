@@ -1,11 +1,13 @@
 import { type FormEvent, type ReactNode, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  ArrowRight,
   Camera,
   Check,
   ChevronRight,
   FileText,
   Leaf,
+  Clock3,
   LockKeyhole,
   Mic2,
   Music2,
@@ -126,21 +128,39 @@ export function SessionSetup() {
       return;
     }
 
-    // Future extension: pass this local setup into the active session state.
-    navigate("/session");
+    navigate("/session", {
+      state: {
+        goal: goal.trim(),
+        duration: selectedDuration,
+        audioEnabled,
+        audioCategory,
+        volume,
+        cameraEnabled,
+      },
+    });
   }
 
   return (
     <div className="relative isolate min-h-[calc(100vh-92px)] overflow-hidden">
-      <div className="mx-auto max-w-[1320px] px-6 pb-12 pt-8 lg:px-10 xl:px-12">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-56 overflow-hidden"
+        aria-hidden="true"
+      >
+        <img
+          src="/assets/mountain-duo.png"
+          alt=""
+          className="absolute -right-12 top-5 w-[55%] max-w-[720px] opacity-75"
+        />
+      </div>
+      <div className="relative z-10 mx-auto max-w-[1320px] px-6 pb-12 pt-8 lg:px-10 xl:px-12">
         <header className="relative z-10 mb-8 max-w-[950px]">
-          <div className="mb-3 flex items-center gap-3">
-            <p className="text-[13px] font-bold uppercase tracking-[0.1em] text-sky-500">
+          <div className="mb-4 flex items-center gap-3">
+            <p className="font-inter text-[13px] font-bold uppercase tracking-[0.1em] text-sky-500">
               Session setup
             </p>
             <span className="h-px w-8 bg-sky-200" aria-hidden="true" />
-            <div className="flex items-center gap-1.5" aria-label="Step 1 of 4">
-              {[0, 1, 2, 3].map((step) => (
+            <div className="flex items-center gap-1.5" aria-label="Step 1 of 3">
+              {[0, 1, 2].map((step) => (
                 <span
                   key={step}
                   className={cn(
@@ -151,10 +171,10 @@ export function SessionSetup() {
               ))}
             </div>
           </div>
-          <h1 className="text-[36px] font-semibold leading-[1.1] tracking-[-0.05em] text-ink-950 sm:text-[44px]">
+          <h1 className="text-[42px] font-semibold leading-[1.08] tracking-[-0.05em] text-ink-950 sm:text-[56px]">
             Let&apos;s set up your focus session
           </h1>
-          <p className="mt-3 text-[17px] leading-relaxed text-ink-600">
+          <p className="mt-4 text-[18px] leading-relaxed text-ink-600">
             Choose a goal, set your preferences, and create the right
             environment for deep work.
           </p>
@@ -422,22 +442,26 @@ export function SessionSetup() {
               <button
                 type="button"
                 onClick={() => setDuration(25)}
-                className="group relative isolate mt-4 min-h-[128px] w-full overflow-hidden rounded-2xl border border-sky-200/60 bg-focus-card-blue p-5 text-left transition-shadow focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
+                className="group relative isolate mt-4 min-h-[158px] w-full overflow-hidden rounded-2xl border border-sky-200/80 bg-[linear-gradient(135deg,#eaf5ff_0%,#d8eafa_48%,#b8d7f5_100%)] p-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_18px_rgba(44,127,227,0.08)] transition-all hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_12px_24px_rgba(44,127,227,0.14)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
               >
-                <img
-                  src="/assets/mountain-duo.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -right-4 -bottom-4 z-0 h-[165px] w-[85%] max-w-none object-contain object-right-bottom opacity-75"
-                />
-
-                <span className="relative z-10 block text-[30px] font-semibold tracking-[-0.045em] text-ink-950">
-                  25 minutes
+                <span className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full bg-white/35 transition-transform duration-300 group-hover:scale-110" />
+                <span className="pointer-events-none absolute -bottom-16 -right-8 h-40 w-64 rounded-[50%] border-[18px] border-white/25" />
+                <span className="relative z-10 inline-flex items-center gap-2 rounded-full bg-white/65 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-sky-500">
+                  <Sparkles size={12} /> Suggested focus
                 </span>
-
-                <span className="relative z-10 mt-1 block max-w-[250px] text-[15px] leading-relaxed text-ink-600">
-                  A 25-minute session may help you stay focused and productive
-                  today.
+                <span className="relative z-10 mt-3 flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/75 text-sky-500 shadow-sm">
+                    <Clock3 size={21} />
+                  </span>
+                  <span className="text-[30px] font-semibold tracking-[-0.045em] text-ink-950">
+                    25 minutes
+                  </span>
+                </span>
+                <span className="relative z-10 mt-2 block max-w-[245px] text-[14px] leading-relaxed text-ink-600">
+                  A balanced session to help you stay focused and productive.
+                </span>
+                <span className="absolute bottom-5 right-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-navy-900 text-white shadow-control transition-transform group-hover:translate-x-1">
+                  <ArrowRight size={18} />
                 </span>
               </button>
             </section>
@@ -533,7 +557,7 @@ export function SessionSetup() {
               </Link>
             </div>
             <p className="text-center text-[11px] text-ink-400">
-              No timer or session tracking starts in this preview.
+              Your session starts as soon as you continue.
             </p>
           </aside>
         </form>

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   BarChart3,
   CalendarClock,
@@ -18,6 +18,8 @@ const navigation = [
 ];
 
 export function Sidebar() {
+  const location = useLocation();
+
   return (
     <aside
       className="sticky top-5 my-0 mb-5 ml-6 hidden h-[calc(100vh-112px)] self-start w-[72px] shrink-0 flex-col items-center rounded-2xl bg-white px-2 py-5 shadow-soft md:flex"
@@ -30,14 +32,18 @@ export function Sidebar() {
             to={to}
             aria-label={label}
             title={label}
-            className={({ isActive }) =>
-              cn(
+            className={({ isActive }) => {
+              const focusIsActive =
+                label === "Focus session" &&
+                location.pathname.startsWith("/session");
+              const active = isActive || focusIsActive;
+              return cn(
                 "group relative flex h-11 w-11 items-center justify-center rounded-2xl transition-colors",
-                isActive
+                active
                   ? "bg-sky-100 text-sky-500"
                   : "text-ink-800 hover:bg-sky-50 hover:text-sky-500",
-              )
-            }
+              );
+            }}
           >
             {({ isActive }) => (
               <>
