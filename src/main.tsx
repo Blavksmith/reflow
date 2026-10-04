@@ -8,23 +8,27 @@ import { SessionSetup } from "./pages/SessionSetup";
 import { FocusSession } from "./pages/FocusSession";
 import { SessionSummary } from "./pages/SessionSummary";
 import { History } from "./pages/History";
+import { Settings } from "./pages/Settings";
+import { ThemeProvider } from "./theme/ThemeProvider";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route element={<AppShell />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/session/setup" element={<SessionSetup />} />
-          <Route path="/session" element={<FocusSession />} />
-          <Route path="/session/summary" element={<SessionSummary />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/insights" element={<PlaceholderPage />} />
-          <Route path="/settings" element={<PlaceholderPage />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/session/setup" element={<SessionSetup />} />
+            <Route path="/session" element={<FocusSession />} />
+            <Route path="/session/summary" element={<SessionSummary />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/insights" element={<PlaceholderPage />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   </StrictMode>,
 );

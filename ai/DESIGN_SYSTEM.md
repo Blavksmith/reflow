@@ -28,6 +28,8 @@ A calm, editorial visual language for deep work. The system uses generous space,
 | `danger`               | `#D94E5E`                                                        | Interruptions and destructive feedback |
 | `danger-soft`          | `#FDEBED`                                                        | Error surface                          |
 
+Light tokens define the daytime Reflow experience. The dark theme keeps the same semantic roles and hierarchy, but resolves surfaces, text, borders, and soft status backgrounds to dedicated night values. Components should consume these semantic roles rather than introducing page-specific dark colors.
+
 Avoid using more than one saturated accent in a single component. Status colors communicate state, never performance judgement.
 
 ### Typography
@@ -89,3 +91,46 @@ The session flow uses exactly three dots: setup is step 1 of 3, focus is step 2 
 ### Page-specific content
 
 Keep the page label and heading copy relevant to the page. Dashboard may retain its date, supporting quote, and hero character on the right; session pages may retain their session label and three-dot progress indicator. These content differences must not change the shared typography scale or vertical rhythm.
+
+## Dark / Night Theme
+
+Reflow supports Light, Dark, and System preferences without changing its layout, typography, or visual identity. Dark mode is a calm night interpretation of the same blue editorial system; it is not a separate visual style.
+
+### Dark color tokens
+
+| Token | Value | Usage |
+| --- | --- | --- |
+| `dark-page` | `#0B1220` | Dark page base background |
+| `dark-page-gradient` | `linear-gradient(135deg, #0B1220 0%, #101B2D 50%, #142238 100%)` | Global dark page background |
+| `dark-surface` | `#111C2E` | Main cards and navigation surfaces |
+| `dark-surface-elevated` | `#17243A` | Elevated controls, inputs, and nested surfaces |
+| `dark-surface-soft` | `#1B2A42` | Soft sections, muted controls, and secondary surfaces |
+| `dark-ink-950` | `#F3F7FC` | Headings and primary text |
+| `dark-ink-800` | `#D9E4F2` | Body emphasis and controls |
+| `dark-ink-600` | `#9FB0C7` | Supporting text |
+| `dark-ink-400` | `#71839C` | Tertiary and disabled text |
+| `dark-border` | `rgba(148, 174, 207, 0.18)` | Borders and dividers |
+| `success-soft-dark` | `rgba(20, 150, 108, 0.14)` | Completed status surface |
+| `warning-soft-dark` | `rgba(184, 117, 18, 0.14)` | Attention status surface |
+| `danger-soft-dark` | `rgba(217, 78, 94, 0.14)` | Error/interruption status surface |
+
+The existing `sky-500` (`#2C7FE3`) remains the primary accent in both themes. Dark hover and focus states may use `#4D91F3`. Status foreground hues remain `success`, `warning`, and `danger`; only their soft surfaces change for night contrast.
+
+### Component behavior
+
+- Cards use `dark-surface`, elevated cards and controls use `dark-surface-elevated`, and soft backgrounds use `dark-surface-soft`.
+- Navigation keeps the same dimensions and spacing. Dark navigation uses translucent dark surfaces, light text, and a deep navy active state; the sidebar keeps blue active icons and soft blue selected surfaces.
+- Inputs, selects, sliders, toggles, lists, empty states, status indicators, timer surfaces, and dialogs use the same semantic hierarchy with dark borders and controls rather than pure black or white.
+- Existing Reflow illustrations remain recognizable. Dark page surfaces and horizon treatments are adjusted through theme tokens without redesigning the mascot.
+
+### Theme behavior and transition
+
+- **Light** applies the light token set.
+- **Dark** applies the dark token set.
+- **System** resolves to the operating system `prefers-color-scheme` value and updates when the OS preference changes.
+- The selected preference is persisted under the app's theme storage key so it survives restart.
+- Theme-dependent background, text, border, surface, and shadow properties transition for approximately 300ms with an ease timing function. Layout, typography, and position are not animated.
+
+### Accessibility
+
+Both themes retain visible keyboard focus states and readable contrast. State is not communicated by color alone: controls keep labels, icons, and selected indicators. Native controls receive the active `color-scheme`, and `prefers-reduced-motion: reduce` disables the theme transition and minimizes motion.

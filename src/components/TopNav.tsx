@@ -1,5 +1,6 @@
-import { Bell, Search } from "lucide-react";
+import { Bell, Moon, Sun } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useTheme } from "../theme/ThemeProvider";
 import { ReflowCharacter } from "./ReflowCharacter";
 
 const links = [
@@ -12,6 +13,9 @@ const links = [
 
 export function TopNav() {
   const location = useLocation();
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const ThemeIcon = resolvedTheme === "dark" ? Sun : Moon;
+  const nextThemeLabel = resolvedTheme === "dark" ? "light" : "dark";
 
   return (
     <header className="flex h-[92px] items-center justify-between gap-8 px-6 lg:px-10">
@@ -48,10 +52,13 @@ export function TopNav() {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          aria-label="Search"
-          className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200/70 bg-white/70 text-ink-800 transition-colors hover:bg-sky-100"
+          aria-label={`Switch to ${nextThemeLabel} mode`}
+          aria-pressed={resolvedTheme === "dark"}
+          onClick={toggleTheme}
+          title={`Switch to ${nextThemeLabel} mode`}
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200/70 bg-white/70 text-ink-800 transition-colors hover:bg-sky-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
         >
-          <Search size={21} />
+          <ThemeIcon size={21} />
         </button>
         <button
           type="button"

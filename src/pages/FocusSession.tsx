@@ -273,11 +273,11 @@ export function FocusSession() {
                       >
                         <stop
                           offset="0%"
-                          stopColor="#3c8ff0"
+                          stopColor="var(--theme-timer-start)"
                         />
                         <stop
                           offset="100%"
-                          stopColor="#72a9f4"
+                          stopColor="var(--theme-timer-end)"
                         />
                       </linearGradient>
                     </defs>
@@ -285,7 +285,7 @@ export function FocusSession() {
                     <path
                       d="M35 155 A130 130 0 0 1 295 155"
                       fill="none"
-                      stroke="#e4effb"
+                      className="theme-timer-track"
                       strokeLinecap="round"
                       strokeWidth="17"
                     />
@@ -300,7 +300,7 @@ export function FocusSession() {
                       }`}
                       strokeLinecap="round"
                       strokeWidth="17"
-                      className="drop-shadow-[0_5px_8px_rgba(44,127,227,0.22)] transition-all duration-700 ease-linear"
+                      className="theme-timer-progress transition-all duration-700 ease-linear"
                     />
                   </svg>
 
@@ -337,7 +337,7 @@ export function FocusSession() {
                     }
                     className="flex flex-col items-center gap-2 text-[14px] font-medium text-ink-950 disabled:opacity-40"
                   >
-                    <span className="flex h-[74px] w-[74px] items-center justify-center rounded-full border-b-4 border-sky-200 bg-sky-100 text-sky-500 shadow-[0_5px_0_#c6def8] transition-all hover:bg-sky-200 active:translate-y-1 active:shadow-[0_1px_0_#c6def8]">
+                    <span className="flex h-[74px] w-[74px] items-center justify-center rounded-full border-b-4 border-sky-200 bg-sky-100 text-sky-500 theme-control-press transition-all hover:bg-sky-200 active:translate-y-1">
                       {isPaused ? (
                         <Play
                           size={25}
@@ -360,7 +360,7 @@ export function FocusSession() {
                     disabled={isEnding}
                     className="flex flex-col items-center gap-2 text-[16px] font-semibold text-ink-950 disabled:opacity-60"
                   >
-                    <span className="flex h-[90px] w-[90px] items-center justify-center rounded-full border-b-4 border-[#b83f4c] bg-danger text-white shadow-[0_5px_0_#b83f4c] transition-all hover:scale-105 active:translate-y-1 active:shadow-[0_1px_0_#b83f4c]">
+                    <span className="flex h-[90px] w-[90px] items-center justify-center rounded-full border-b-4 theme-danger-press bg-danger text-white transition-all hover:scale-105 active:translate-y-1">
                       {isEnding ? (
                         <RotateCcw
                           size={27}
@@ -388,7 +388,7 @@ export function FocusSession() {
                     disabled={isEnding}
                     className="flex flex-col items-center gap-2 text-[14px] font-medium text-ink-950 disabled:opacity-40"
                   >
-                    <span className="flex h-[74px] w-[74px] items-center justify-center rounded-full border-b-4 border-sky-200 bg-sky-100 text-sky-500 shadow-[0_5px_0_#c6def8] transition-all hover:bg-sky-200 active:translate-y-1 active:shadow-[0_1px_0_#c6def8]">
+                    <span className="flex h-[74px] w-[74px] items-center justify-center rounded-full border-b-4 border-sky-200 bg-sky-100 text-sky-500 theme-control-press transition-all hover:bg-sky-200 active:translate-y-1">
                       <RotateCcw size={25} />
                     </span>
 

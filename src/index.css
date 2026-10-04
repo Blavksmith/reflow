@@ -3,19 +3,36 @@
 @import "./design-system.css";
 
 :root {
-    color: #10213b;
-    background: var(--background-image-page-gradient);
+    color: var(--theme-ink-950);
+    background: var(--theme-page-gradient);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
+}
+
+html {
+    min-width: 320px;
+    min-height: 100%;
+    background: var(--theme-page-gradient);
+}
+
+html[data-theme="light"] {
+    color-scheme: light;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
 }
 
 * {
     box-sizing: border-box;
 }
+
 body {
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
+    color: var(--theme-ink-950);
+    background: var(--theme-page-gradient);
     font-family:
         Raleway,
         ui-sans-serif,
@@ -24,13 +41,54 @@ body {
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
+    transition:
+        background-color 300ms ease,
+        background-image 300ms ease,
+        color 300ms ease;
 }
+
+#root {
+    min-height: 100vh;
+    transition:
+        background-color 300ms ease,
+        color 300ms ease;
+}
+
+button,
+a,
+input,
+select,
+textarea,
+section,
+aside,
+header,
+nav {
+    transition-property: background-color, color, border-color, box-shadow;
+    transition-duration: 300ms;
+    transition-timing-function: ease;
+}
+
 button,
 a {
     -webkit-tap-highlight-color: transparent;
 }
+
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
     outline: 3px solid rgba(44, 127, 227, 0.35);
     outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0ms !important;
+        animation-duration: 0ms !important;
+        animation-iteration-count: 1 !important;
+    }
 }
