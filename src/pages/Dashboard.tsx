@@ -19,6 +19,7 @@ import {
   recentSessions,
 } from "../data/dashboard";
 import type { RecentSession } from "../types/dashboard";
+import { cn } from "../lib/utils";
 import { ReflowCharacter } from "../components/ReflowCharacter";
 
 function SessionStatus({ status }: Pick<RecentSession, "status">) {
@@ -33,6 +34,12 @@ function SessionStatus({ status }: Pick<RecentSession, "status">) {
 }
 
 const sessionIcons = [FileText, FileText, Clock3];
+
+const overviewIcons = {
+  clock: Clock3,
+  completed: Check,
+  interruptions: TriangleAlert,
+} as const;
 
 export function Dashboard() {
   return (
@@ -59,7 +66,7 @@ export function Dashboard() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,.95fr)]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(460px,.9fr)]">
         <section
           className="relative min-h-[323px] overflow-hidden rounded-2xl bg-focus-card-blue px-8 py-7 shadow-soft sm:px-9"
           aria-labelledby="focus-heading"
@@ -117,58 +124,61 @@ export function Dashboard() {
 
         <div className="flex flex-col gap-5">
           <section
-            className="rounded-2xl bg-white px-5 py-5 shadow-soft"
+            className="rounded-[18px] border border-slate-200/70 bg-white/90 p-5 shadow-soft sm:p-6"
             aria-labelledby="overview-heading"
           >
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-6 flex items-center justify-between gap-4">
               <h2
                 id="overview-heading"
-                className="text-[18px] font-semibold text-ink-950"
+                className="text-[18px] font-semibold tracking-[-0.025em] text-ink-950"
               >
-                Today's Focus Overview
+                Today&apos;s Focus Overview
               </h2>
               <button
                 type="button"
                 aria-label="More overview options"
-                className="rounded-lg p-1 text-ink-800 hover:bg-sky-50"
+                className="shrink-0 rounded-lg p-1 text-ink-800 transition-colors hover:bg-sky-50"
               >
                 <MoreHorizontal size={20} />
               </button>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-slate-100">
-              {overviewMetrics.map((metric, index) => {
-                const Icon =
-                  index === 0 ? Clock3 : index === 1 ? Check : TriangleAlert;
-                const value = index === 0 ? "2h 45m" : index === 1 ? "4" : "2";
-                const label =
-                  index === 0
-                    ? "Total Focus Time"
-                    : index === 1
-                      ? "Completed Sessions"
-                      : "Interruptions";
-                const change =
-                  index === 2 ? "↓ 20%" : index === 1 ? "↑ 33%" : "↑ 12%";
+            <div className="overview-metrics grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              {overviewMetrics.map((metric) => {
+                const Icon = overviewIcons[metric.icon];
+                const negative = metric.tone === "negative";
                 return (
                   <div
-                    key={metric.label}
-                    className="flex min-w-0 items-start gap-2 px-3 first:pl-1"
+                    key={metric.id}
+                    className="flex min-w-0 items-center gap-3 py-4 sm:px-4 sm:py-2 sm:first:pl-0 sm:last:pr-0"
                   >
                     <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${index === 0 ? "bg-sky-100 text-sky-500" : index === 1 ? "bg-success-soft text-success" : "bg-danger-soft text-danger"}`}
+                      className={cn(
+                        "flex h-12 w-12 shrink-0 items-center justify-center rounded-full",
+                        negative
+                          ? "bg-danger-soft text-danger"
+                          : metric.id === "completed-sessions"
+                            ? "bg-success-soft text-success"
+                            : "bg-sky-100 text-sky-500",
+                      )}
                     >
-                      <Icon size={20} />
+                      <Icon size={22} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[19px] font-bold leading-none tracking-[-0.035em] text-ink-950">
-                        {value}
+                      <p className="text-[22px] font-bold leading-none tracking-[-0.04em] text-ink-950">
+                        {metric.value}
                       </p>
-                      <p className="mt-1 whitespace-nowrap text-[10px] leading-tight text-ink-600">
-                        {label}
+                      <p className="mt-1 text-[12px] leading-snug text-ink-600">
+                        {metric.label}
                       </p>
                       <span
-                        className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${index === 2 ? "bg-danger-soft text-danger" : "bg-success-soft text-success"}`}
+                        className={cn(
+                          "mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold",
+                          negative
+                            ? "bg-danger-soft text-danger"
+                            : "bg-success-soft text-success",
+                        )}
                       >
-                        {change}
+                        {metric.change}
                       </span>
                     </div>
                   </div>
@@ -338,7 +348,7 @@ export function Dashboard() {
               </button>
             </div>
           </section>
-          <section className="relative isolate min-h-[150px] overflow-hidden rounded-[18px] border border-sky-200/70 bg-[#eaf2fb] shadow-soft">
+          <section className="theme-quote-card relative isolate min-h-[150px] overflow-hidden rounded-[18px] border border-sky-200/70 shadow-soft">
             <img
               src="/assets/bg.png"
               alt=""
@@ -346,7 +356,7 @@ export function Dashboard() {
               className="pointer-events-none absolute inset-0 h-full w-full object-cover object-bottom opacity-90"
             />
             <div
-              className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(255,251,241,0.96)_0%,rgba(255,251,241,0.72)_38%,rgba(234,242,251,0.18)_75%,rgba(234,242,251,0)_100%)]"
+              className="theme-quote-scrim pointer-events-none absolute inset-0"
               aria-hidden="true"
             />
             <div className="relative z-10 px-6 py-5">

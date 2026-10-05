@@ -442,7 +442,7 @@ export function SessionSetup() {
               <button
                 type="button"
                 onClick={() => setDuration(25)}
-                className="group relative isolate mt-4 min-h-[158px] w-full overflow-hidden rounded-2xl border border-sky-200/80 bg-[linear-gradient(135deg,#eaf5ff_0%,#d8eafa_48%,#b8d7f5_100%)] p-5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_8px_18px_rgba(44,127,227,0.08)] transition-all hover:-translate-y-0.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_12px_24px_rgba(44,127,227,0.14)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
+                className="group theme-recommendation-card relative isolate mt-4 min-h-[158px] w-full overflow-hidden rounded-2xl border border-sky-200/80 p-5 text-left transition-all hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
               >
                 <span className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full bg-white/35 transition-transform duration-300 group-hover:scale-110" />
                 <span className="pointer-events-none absolute -bottom-16 -right-8 h-40 w-64 rounded-[50%] border-[18px] border-white/25" />

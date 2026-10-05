@@ -1,9 +1,30 @@
 import type { AdaptiveRecommendation, RecentSession } from '../types/dashboard';
 
 export const overviewMetrics = [
-  { label: 'Total focus time', value: '8h 42m', detail: 'This month' },
-  { label: 'Completed sessions', value: '18', detail: 'This month' },
-  { label: 'Interruptions', value: '6', detail: 'Across 18 sessions' },
+  {
+    id: 'focus-time',
+    label: 'Total Focus Time',
+    value: '2h 45m',
+    change: '↑ 12%',
+    tone: 'positive',
+    icon: 'clock',
+  },
+  {
+    id: 'completed-sessions',
+    label: 'Completed Sessions',
+    value: '4',
+    change: '↑ 33%',
+    tone: 'positive',
+    icon: 'completed',
+  },
+  {
+    id: 'interruptions',
+    label: 'Interruptions',
+    value: '2',
+    change: '↓ 20%',
+    tone: 'negative',
+    icon: 'interruptions',
+  },
 ] as const;
 
 export const recentSessions: RecentSession[] = [

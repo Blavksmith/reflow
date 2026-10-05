@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { Dashboard } from "./pages/Dashboard";
-import { PlaceholderPage } from "./pages/PlaceholderPage";
+import { Insights } from "./pages/Insights";
 import { SessionSetup } from "./pages/SessionSetup";
 import { FocusSession } from "./pages/FocusSession";
 import { SessionSummary } from "./pages/SessionSummary";
@@ -23,7 +23,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/session" element={<FocusSession />} />
             <Route path="/session/summary" element={<SessionSummary />} />
             <Route path="/history" element={<History />} />
-            <Route path="/insights" element={<PlaceholderPage />} />
+            <Route path="/insights" element={<Insights />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
