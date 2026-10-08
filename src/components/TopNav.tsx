@@ -1,5 +1,6 @@
-import { Bell, Moon, Sun } from "lucide-react";
+// import { Bell, Moon, Sun } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "../features/auth/AuthProvider";
 import { useTheme } from "../theme/ThemeProvider";
 import { ReflowCharacter } from "./ReflowCharacter";
 
@@ -11,11 +12,17 @@ const links = [
   { label: "Settings", to: "/settings" },
 ];
 
-export function TopNav() {
+export function TopNav({ onLogin }: { onLogin: () => void }) {
   const location = useLocation();
+  const { user, signOut } = useAuth();
   const { resolvedTheme, toggleTheme } = useTheme();
   const ThemeIcon = resolvedTheme === "dark" ? Sun : Moon;
   const nextThemeLabel = resolvedTheme === "dark" ? "light" : "dark";
+  const displayName =
+    typeof user?.user_metadata?.display_name === "string"
+      ? user.user_metadata.display_name
+      : user?.email?.split("@")[0] ?? "Reflow user";
+  const profileInitial = displayName.charAt(0).toUpperCase();
 
   return (
     <header className="flex h-[92px] items-center justify-between gap-8 px-6 lg:px-10">
@@ -68,12 +75,25 @@ export function TopNav() {
           <Bell size={20} />
           <span className="absolute right-3 top-2 h-2 w-2 rounded-full bg-danger" />
         </button>
-        <div
-          className="hidden h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#d7e7f6] text-sm font-bold text-navy-900 sm:flex"
-          aria-label="Maya profile"
-        >
-          M
-        </div>
+        {user ? (
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            title={`Sign out ${displayName}`}
+            aria-label={`Sign out ${displayName}`}
+            className="hidden h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#d7e7f6] text-sm font-bold text-navy-900 transition-colors hover:bg-sky-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200 sm:flex"
+          >
+            {profileInitial}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onLogin}
+            className="inline-flex h-11 items-center justify-center rounded-full border border-sky-200 bg-white/80 px-4 text-[13px] font-semibold text-sky-500 shadow-soft transition-colors hover:bg-sky-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
+          >
+            Log in
+          </button>
+        )}
       </div>
     </header>
   );

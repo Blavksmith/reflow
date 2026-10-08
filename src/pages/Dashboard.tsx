@@ -18,6 +18,7 @@ import {
   overviewMetrics,
   recentSessions,
 } from "../data/dashboard";
+import { useAuth } from "../features/auth/AuthProvider";
 import type { RecentSession } from "../types/dashboard";
 import { cn } from "../lib/utils";
 import { ReflowCharacter } from "../components/ReflowCharacter";
@@ -42,6 +43,13 @@ const overviewIcons = {
 } as const;
 
 export function Dashboard() {
+  const { user } = useAuth();
+  const displayName =
+    typeof user?.user_metadata?.display_name === "string"
+      ? user.user_metadata.display_name
+      : user?.email?.split("@")[0] ?? "there";
+  const greeting = user ? `Welcome back, ${displayName}!` : "Welcome to Reflow";
+
   return (
     <div className="mx-auto max-w-[1320px] px-6 pb-12 pt-9 lg:px-10 xl:px-12">
       <header className="relative z-10 mb-8 flex items-start justify-between gap-8">
@@ -50,7 +58,7 @@ export function Dashboard() {
             Tuesday, 21 Sept 2026
           </p>
           <h1 className="text-[42px] font-semibold leading-[1.08] tracking-[-0.05em] text-ink-950 sm:text-[56px]">
-            Welcome back, Maya!
+            {greeting}
           </h1>
           <p className="mt-4 text-[18px] leading-relaxed text-ink-600">
             A focused day is a collection of small, intentional moments.

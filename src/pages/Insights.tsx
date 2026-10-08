@@ -370,11 +370,6 @@ function Insights() {
           <div className="mb-4 flex items-center gap-3">
             <p className="font-inter text-[13px] font-bold uppercase tracking-[0.1em] text-sky-500">Insights</p>
             <span className="h-px w-8 bg-sky-200" aria-hidden="true" />
-            <div className="flex items-center gap-1.5" aria-hidden="true">
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-200" />
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-200" />
-            </div>
           </div>
           <h1 className="text-[42px] font-semibold leading-[1.08] tracking-[-0.05em] text-ink-950 sm:text-[56px]">See your progress</h1>
           <p className="mt-4 text-[18px] leading-relaxed text-ink-600">Understand your focus patterns and build better habits.</p>

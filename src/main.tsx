@@ -9,13 +9,15 @@ import { FocusSession } from "./pages/FocusSession";
 import { SessionSummary } from "./pages/SessionSummary";
 import { History } from "./pages/History";
 import { Settings } from "./pages/Settings";
+import { AuthProvider } from "./features/auth/AuthProvider";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
-      <BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
         <Routes>
           <Route element={<AppShell />}>
             <Route path="/dashboard" element={<Dashboard />} />
@@ -28,7 +30,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   </StrictMode>,
 );

@@ -1,14 +1,17 @@
+import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Outlet, useLocation } from "react-router-dom";
+import { AuthModal } from "../features/auth/AuthModal";
 import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
 
 export function AppShell() {
   const location = useLocation();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-page-gradient text-ink-950">
-      <TopNav />
+      <TopNav onLogin={() => setIsAuthModalOpen(true)} />
       <div className="flex min-h-[calc(100vh-92px)] items-stretch">
         <Sidebar />
         <main className="min-w-0 flex-1">
@@ -25,6 +28,10 @@ export function AppShell() {
           </AnimatePresence>
         </main>
       </div>
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 }

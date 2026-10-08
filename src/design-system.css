@@ -410,3 +410,74 @@
 .overview-metrics > * {
     border-color: var(--theme-divider);
 }
+
+:root {
+    --theme-rescue-backdrop: rgba(16, 39, 68, 0.34);
+    --theme-rescue-panel-shadow: 0 18px 50px rgba(16, 39, 68, 0.2);
+}
+
+[data-theme="dark"] {
+    --theme-rescue-backdrop: rgba(5, 12, 24, 0.68);
+    --theme-rescue-panel-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+}
+
+.rescue-backdrop {
+    background: var(--theme-rescue-backdrop);
+    backdrop-filter: blur(5px);
+    animation: rescue-backdrop-in 240ms ease-out both;
+}
+
+.rescue-panel {
+    box-shadow: var(--theme-rescue-panel-shadow);
+    animation: rescue-panel-in 260ms ease-out both;
+}
+
+.rescue-breathing-circle {
+    animation: rescue-breathe 8s ease-in-out infinite;
+}
+
+@keyframes rescue-backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes rescue-panel-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes rescue-breathe {
+    0%, 100% { transform: scale(0.94); }
+    50% { transform: scale(1.04); }
+}
+
+:root {
+    --theme-auth-backdrop: rgba(16, 39, 68, 0.34);
+    --theme-auth-shadow: 0 18px 60px rgba(16, 39, 68, 0.22);
+}
+
+[data-theme="dark"] {
+    --theme-auth-backdrop: rgba(5, 12, 24, 0.7);
+    --theme-auth-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+}
+
+.auth-backdrop {
+    background: var(--theme-auth-backdrop);
+    backdrop-filter: blur(7px);
+    animation: auth-backdrop-in 220ms ease-out both;
+}
+
+.auth-modal-shell {
+    box-shadow: var(--theme-auth-shadow);
+    animation: auth-modal-in 260ms ease-out both;
+}
+
+@keyframes auth-backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes auth-modal-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
