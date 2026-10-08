@@ -17,6 +17,7 @@ type AuthMode = "sign-in" | "sign-up";
 type AuthModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onAuthenticated?: () => void;
 };
 
 function isValidEmail(email: string) {
@@ -77,7 +78,11 @@ function Field({
   );
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export function AuthModal({
+  isOpen,
+  onClose,
+  onAuthenticated,
+}: AuthModalProps) {
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [displayName, setDisplayName] = useState("");
@@ -161,11 +166,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
 
     if (mode === "sign-up" && !result.data?.session) {
-      setNotice("Check your email to confirm your account, then sign in.");
+      setNotice(
+        "Account created, but email confirmation is enabled. Disable Confirm email in Supabase Auth settings for instant MVP access.",
+      );
       setMode("sign-in");
       return;
     }
 
+    onAuthenticated?.();
     onClose();
   }
 

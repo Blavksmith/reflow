@@ -17,8 +17,9 @@ type RescueActivity = "choices" | "break" | "hydrate" | "stretch" | "environment
 type RescueModeProps = {
   isOpen: boolean;
   onResume: () => void;
-  onSnooze: () => void;
   onEnd: () => void;
+  onActivityStart?: (activity: Exclude<RescueActivity, "choices">) => void;
+  onActivityComplete?: (activity: Exclude<RescueActivity, "choices">) => void;
 };
 
 const suggestions = [
@@ -299,7 +300,13 @@ function ActivityView({
   );
 }
 
-function RescueMode({ isOpen, onResume, onSnooze, onEnd }: RescueModeProps) {
+function RescueMode({
+  isOpen,
+  onResume,
+  onEnd,
+  onActivityStart,
+  onActivityComplete,
+}: RescueModeProps) {
   const [activity, setActivity] = useState<RescueActivity>("choices");
   const [breathElapsed, setBreathElapsed] = useState(0);
   const [breakSeconds, setBreakSeconds] = useState(300);
@@ -356,6 +363,7 @@ function RescueMode({ isOpen, onResume, onSnooze, onEnd }: RescueModeProps) {
   }
 
   function selectActivity(nextActivity: Exclude<RescueActivity, "choices">) {
+    onActivityStart?.(nextActivity);
     setActivity(nextActivity);
     if (nextActivity === "break") {
       setBreakSeconds(300);
@@ -366,6 +374,9 @@ function RescueMode({ isOpen, onResume, onSnooze, onEnd }: RescueModeProps) {
   }
 
   function completeActivity() {
+    if (activity !== "choices") {
+      onActivityComplete?.(activity);
+    }
     setActivity("choices");
     setBreathElapsed(0);
   }
@@ -476,13 +487,6 @@ function RescueMode({ isOpen, onResume, onSnooze, onEnd }: RescueModeProps) {
             I&apos;m ready to focus again
           </button>
           <div className="order-2 flex flex-col gap-2 sm:order-1 sm:flex-row">
-            <button
-              type="button"
-              onClick={onSnooze}
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-[13px] font-semibold text-ink-800 transition-colors hover:bg-sky-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
-            >
-              Remind me in 5 minutes
-            </button>
             <button
               type="button"
               onClick={onEnd}

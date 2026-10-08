@@ -1,6 +1,8 @@
-// import { Bell, Moon, Sun } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Bell, Moon, Sun } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthProvider";
+import { useProfile } from "../features/profile/ProfileProvider";
+import { useUserSettings } from "../features/settings/UserSettingsProvider";
 import { useTheme } from "../theme/ThemeProvider";
 import { ReflowCharacter } from "./ReflowCharacter";
 
@@ -14,15 +16,29 @@ const links = [
 
 export function TopNav({ onLogin }: { onLogin: () => void }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
+  const { updateSetting, loading: settingsLoading } = useUserSettings();
   const { resolvedTheme, toggleTheme } = useTheme();
   const ThemeIcon = resolvedTheme === "dark" ? Sun : Moon;
   const nextThemeLabel = resolvedTheme === "dark" ? "light" : "dark";
-  const displayName =
-    typeof user?.user_metadata?.display_name === "string"
-      ? user.user_metadata.display_name
-      : user?.email?.split("@")[0] ?? "Reflow user";
-  const profileInitial = displayName.charAt(0).toUpperCase();
+  const displayName = profile?.display_name?.trim() || "Reflow user";
+  const profileInitial = displayName.charAt(0).toUpperCase() || "R";
+  const avatarUrl = profile?.avatar_url?.trim() || null;
+
+  function handleThemeToggle() {
+    const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
+    toggleTheme();
+    if (user && !settingsLoading) {
+      void updateSetting("theme", nextTheme);
+    }
+  }
+
+  function handleSignOut() {
+    navigate("/dashboard", { replace: true });
+    void signOut();
+  }
 
   return (
     <header className="flex h-[92px] items-center justify-between gap-8 px-6 lg:px-10">
@@ -61,7 +77,7 @@ export function TopNav({ onLogin }: { onLogin: () => void }) {
           type="button"
           aria-label={`Switch to ${nextThemeLabel} mode`}
           aria-pressed={resolvedTheme === "dark"}
-          onClick={toggleTheme}
+          onClick={handleThemeToggle}
           title={`Switch to ${nextThemeLabel} mode`}
           className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200/70 bg-white/70 text-ink-800 transition-colors hover:bg-sky-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
         >
@@ -78,12 +94,21 @@ export function TopNav({ onLogin }: { onLogin: () => void }) {
         {user ? (
           <button
             type="button"
-            onClick={() => void signOut()}
+            onClick={handleSignOut}
             title={`Sign out ${displayName}`}
             aria-label={`Sign out ${displayName}`}
             className="hidden h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#d7e7f6] text-sm font-bold text-navy-900 transition-colors hover:bg-sky-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200 sm:flex"
           >
-            {profileInitial}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              profileInitial
+            )}
           </button>
         ) : (
           <button
