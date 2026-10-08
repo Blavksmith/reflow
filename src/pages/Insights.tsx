@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
@@ -11,6 +11,8 @@ import {
   TriangleAlert,
   Zap,
 } from "lucide-react";
+import { useAuth } from "../features/auth/AuthProvider";
+import { getInsightsData, type InsightsData } from "../features/insights/insights.service";
 import { cn } from "../lib/utils";
 
 type DateRange = "today" | "week" | "month";
@@ -30,28 +32,6 @@ const dateRanges: Array<{ value: DateRange; label: string }> = [
   { value: "month", label: "This month" },
 ];
 
-const focusTrendData = [
-  { day: "Mon", date: "Sep 21", value: 24 },
-  { day: "Tue", date: "Sep 22", value: 35 },
-  { day: "Wed", date: "Sep 23", value: 29 },
-  { day: "Thu", date: "Sep 24", value: 52 },
-  { day: "Fri", date: "Sep 25", value: 41 },
-  { day: "Sat", date: "Sep 26", value: 20 },
-  { day: "Sun", date: "Sep 27", value: 38 },
-];
-
-const durationData = [
-  { day: "Mon", value: 20 },
-  { day: "Tue", value: 26 },
-  { day: "Wed", value: 28 },
-  { day: "Thu", value: 32 },
-  { day: "Fri", value: 25 },
-  { day: "Sat", value: 18 },
-  { day: "Sun", value: 22 },
-];
-
-const interruptionData = [1, 2, 1, 5, 2, 3, 2];
-const recoveryData = [6, 7, 4, 8, 6, 5, 7];
 const chartLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const axisLabelStyle = {
@@ -232,11 +212,13 @@ function LineChart({
   max,
   tone,
   label,
+  labels,
 }: {
   values: number[];
   max: number;
   tone: ChartTone;
   label: string;
+  labels?: string[];
 }) {
   const width = 720;
   const height = 220;
@@ -246,11 +228,13 @@ function LineChart({
   const bottom = 38;
   const chartWidth = width - left - right;
   const chartHeight = height - top - bottom;
+  const denominator = Math.max(1, values.length - 1);
   const points = values.map((value, index) => {
-    const x = left + (chartWidth / (values.length - 1)) * index;
+    const x = left + (chartWidth / denominator) * index;
     const y = top + chartHeight - (value / max) * chartHeight;
     return { x, y, value };
   });
+  const pointLabels = labels ?? chartLabels;
   const path = points
     .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
     .join(" ");
@@ -292,9 +276,9 @@ function LineChart({
       <path d={area} fill={`url(#${gradientId})`} />
       <path d={path} fill="none" stroke={stroke} strokeLinecap="round" strokeWidth="3" />
       {points.map((point, index) => (
-        <g key={`${chartLabels[index]}-${point.value}`}>
+        <g key={`${pointLabels[index]}-${point.value}`}>
           <title>
-            {chartLabels[index]}: {point.value}
+            {pointLabels[index]}: {point.value}
           </title>
           <circle cx={point.x} cy={point.y} r="4.5" fill={stroke} />
           <text
@@ -303,7 +287,7 @@ function LineChart({
             textAnchor="middle"
             style={axisLabelStyle}
           >
-            {chartLabels[index]}
+            {pointLabels[index]}
           </text>
         </g>
       ))}
@@ -311,15 +295,24 @@ function LineChart({
   );
 }
 
-function CompletionChart() {
+function CompletionChart({
+  completionRate,
+  completedSessions,
+  otherSessions,
+}: {
+  completionRate: number | null;
+  completedSessions: number;
+  otherSessions: number;
+}) {
   const radius = 46;
   const circumference = 2 * Math.PI * radius;
-  const completed = circumference * 0.82;
+  const percentage = completionRate ?? 0;
+  const completed = circumference * (percentage / 100);
 
   return (
     <div className="mt-4 flex flex-col items-center">
       <div className="relative h-36 w-36">
-        <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" role="img" aria-label="82 percent completion rate">
+        <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" role="img" aria-label={`${percentage}% completion rate`}>
           <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--theme-sky-200)" strokeWidth="12" />
           <circle
             cx="60"
@@ -333,7 +326,7 @@ function CompletionChart() {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <strong className="text-[24px] font-semibold tracking-[-0.04em] text-ink-950">82%</strong>
+          <strong className="text-[24px] font-semibold tracking-[-0.04em] text-ink-950">{completionRate === null ? "—" : `${percentage}%`}</strong>
           <span className="text-[11px] text-ink-600">Completed</span>
         </div>
       </div>
@@ -342,14 +335,14 @@ function CompletionChart() {
           <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-sky-500" />
           <span>
             <strong className="block text-[13px] text-ink-950">Completed sessions</strong>
-            41 sessions
+            {completedSessions} sessions
           </span>
         </div>
         <div className="flex items-start gap-2">
           <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-sky-200" />
           <span>
             <strong className="block text-[13px] text-ink-950">Not completed</strong>
-            9 sessions
+            {otherSessions} sessions
           </span>
         </div>
       </div>
@@ -358,10 +351,39 @@ function CompletionChart() {
 }
 
 function Insights() {
+  const { user } = useAuth();
   const [dateRange, setDateRange] = useState<DateRange>("week");
   const [chartView, setChartView] = useState("daily");
+  const [insightsData, setInsightsData] = useState<InsightsData | null>(null);
+  const [loading, setLoading] = useState(Boolean(user?.id));
+  const [error, setError] = useState<string | null>(null);
   const selectedRangeLabel =
     dateRanges.find((range) => range.value === dateRange)?.label ?? "This week";
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let active = true;
+    queueMicrotask(() => setLoading(true));
+    void getInsightsData(user.id, dateRange).then((result) => {
+      if (!active) return;
+      setInsightsData(result.data);
+      setError(result.error);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [dateRange, user?.id]);
+
+  const data = insightsData;
+  const focusTrendData = data?.focusTrend.length ? data.focusTrend : [{ day: "—", value: 0 }];
+  const durationData = data?.durationTrend.length ? data.durationTrend : [{ day: "—", value: 0 }];
+  const interruptionData = data?.interruptionTrend.length ? data.interruptionTrend : [0];
+  const recoveryData = data?.recoveryTrend.length ? data.recoveryTrend : [0];
+  const focusMax = Math.max(1, ...focusTrendData.map((point) => point.value));
+  const durationMax = Math.max(1, ...durationData.map((point) => point.value));
+  const interruptionsMax = Math.max(1, ...interruptionData);
+  const recoveryMax = Math.max(1, ...recoveryData);
 
   return (
     <div className="relative isolate min-h-[calc(100vh-92px)] overflow-hidden">
@@ -373,6 +395,7 @@ function Insights() {
           </div>
           <h1 className="text-[42px] font-semibold leading-[1.08] tracking-[-0.05em] text-ink-950 sm:text-[56px]">See your progress</h1>
           <p className="mt-4 text-[18px] leading-relaxed text-ink-600">Understand your focus patterns and build better habits.</p>
+          {(loading || error) && <p className={error ? "mt-2 text-[12px] text-danger" : "mt-2 text-[12px] text-ink-600"} role={error ? "alert" : "status"}>{error ?? "Loading your focus insights…"}</p>}
         </header>
 
         <div
@@ -412,48 +435,48 @@ function Insights() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard icon={Clock3} label="Average Focus Duration" value="28 min" detail="↑ 12% vs. last week" />
-          <MetricCard icon={Target} label="Completion Rate" value="82%" detail="↑ 8% vs. last week" tone="success" />
-          <MetricCard icon={Zap} label="Interruptions" value="2.3" detail="per session" tone="warning" />
-          <MetricCard icon={Leaf} label="Recovery Time" value="6 min" detail="avg. after interruption" tone="success" />
+          <MetricCard icon={Clock3} label="Average Focus Duration" value={data?.averageDurationMinutes == null ? "—" : `${data.averageDurationMinutes} min`} detail="Recorded sessions" />
+          <MetricCard icon={Target} label="Completion Rate" value={data?.completionRate == null ? "—" : `${data.completionRate}%`} detail="Recorded sessions" tone="success" />
+          <MetricCard icon={Zap} label="Interruptions" value={data?.interruptionsPerSession == null ? "—" : String(data.interruptionsPerSession)} detail="Per session" tone="warning" />
+          <MetricCard icon={Leaf} label="Recovery Time" value={data?.recoveryMinutes == null ? "—" : `${data.recoveryMinutes} min`} detail="Completed recovery" tone="success" />
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-12">
           <section className="rounded-[18px] border border-slate-200/70 bg-white/90 p-5 shadow-soft sm:p-6 xl:col-span-6" aria-label="Focus trends">
             <ChartHeader icon={BarChart3} title="Focus trends" description="Your focus duration over the selected period." action={<label className="relative shrink-0" htmlFor="focus-chart-view"><span className="sr-only">Focus trend grouping</span><select id="focus-chart-view" value={chartView} onChange={(event) => setChartView(event.target.value)} className="h-9 appearance-none rounded-lg border border-slate-200/80 bg-white px-3 pr-8 text-[12px] font-semibold text-ink-950 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"><option value="daily">Daily</option><option value="weekly">Weekly</option></select><ChevronDown size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-ink-600" /></label>} />
-            <BarChart data={focusTrendData} max={60} highlightDay="Thu" label="Focus duration by day, with Thursday as the highest focus day at 52 minutes." />
+            <BarChart data={focusTrendData} max={focusMax} highlightDay={data?.bestDay ?? undefined} label="Focus duration from recorded sessions." />
           </section>
 
           <section className="rounded-[18px] border border-slate-200/70 bg-white/90 p-5 shadow-soft sm:p-6 xl:col-span-3" aria-label="Completion Rate">
             <ChartHeader icon={CheckCircle2} title="Completion Rate" description="Percentage of focus sessions completed." />
-            <CompletionChart />
+            <CompletionChart completionRate={data?.completionRate ?? null} completedSessions={data?.completedSessions ?? 0} otherSessions={data?.otherSessions ?? 0} />
           </section>
 
           <section className="rounded-[18px] border border-slate-200/70 bg-white/90 p-5 shadow-soft sm:p-6 xl:col-span-3" aria-label="Average Duration">
             <ChartHeader icon={Clock3} title="Average Duration" description="Your average focus session length." />
-            <BarChart data={durationData} max={40} highlightDay="Thu" label="Average focus duration by day, with Thursday as the best day at 32 minutes." />
-            <p className="mt-2 text-center text-[11px] text-ink-600">Best day: <strong className="text-ink-950">Thursday · 32 min</strong></p>
+            <BarChart data={durationData} max={durationMax} highlightDay={data?.bestDay ?? undefined} label="Average focus duration from recorded sessions." />
+            <p className="mt-2 text-center text-[11px] text-ink-600">Best day: <strong className="text-ink-950">{data?.bestDay ?? "—"}</strong></p>
           </section>
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-12">
           <section className="rounded-[18px] border border-slate-200/70 bg-white/90 p-5 shadow-soft sm:p-6 xl:col-span-5" aria-label="Interruptions">
             <ChartHeader icon={TriangleAlert} title="Interruptions" description="How often your focus is interrupted." />
-            <LineChart values={interruptionData} max={6} tone="blue" label="Interruptions per day across the selected week." />
-            <p className="mt-1 text-center text-[12px] text-ink-600">Lowest interruption days help your focus stay steady.</p>
+            <LineChart values={interruptionData} max={interruptionsMax} tone="blue" label="Interruptions from recorded sessions." />
+            <p className="mt-1 text-center text-[12px] text-ink-600">Recorded interruption patterns for the selected period.</p>
           </section>
 
           <section className="rounded-[18px] border border-slate-200/70 bg-white/90 p-5 shadow-soft sm:p-6 xl:col-span-4" aria-label="Recovery patterns">
             <ChartHeader icon={Leaf} title="Recovery patterns" description="How long it takes to recover after an interruption." />
-            <LineChart values={recoveryData} max={10} tone="success" label="Average recovery time per day across the selected week." />
-            <p className="mt-1 text-center text-[12px] text-ink-600">Average recovery: <strong className="text-ink-950">6 minutes</strong></p>
+            <LineChart values={recoveryData} max={recoveryMax} tone="success" label="Recovery time from recorded recovery actions." />
+            <p className="mt-1 text-center text-[12px] text-ink-600">Average recovery: <strong className="text-ink-950">{data?.recoveryMinutes == null ? "—" : `${data.recoveryMinutes} minutes`}</strong></p>
           </section>
 
           <section className="relative isolate overflow-hidden rounded-[18px] border border-sky-200/70 bg-focus-card-blue p-5 shadow-soft sm:p-6 xl:col-span-3" aria-labelledby="personal-insight-heading">
             <div className="relative z-10">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/75 text-sky-500"><Lightbulb size={19} /></span>
               <h2 id="personal-insight-heading" className="mt-4 text-[18px] font-semibold tracking-[-0.025em] text-ink-950">Insight for you</h2>
-              <p className="mt-2 max-w-[260px] text-[13px] leading-relaxed text-ink-600">Your focus sessions are becoming more consistent this week. You recover faster after interruptions when you take a short break.</p>
+              <p className="mt-2 max-w-[260px] text-[13px] leading-relaxed text-ink-600">{data?.insight ?? "Complete a few focus sessions to reveal a personal pattern."}</p>
             </div>
           </section>
         </div>

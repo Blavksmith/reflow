@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   BookOpen,
@@ -20,14 +20,14 @@ import {
   X,
 } from "lucide-react";
 import {
-  groupSessionsByDate,
-  historySessions,
   type HistoryIcon,
   type HistorySession,
   type HistoryStatus,
   type RecoveryAction,
   type TimelineSegment,
 } from "../data/history";
+import { useAuth } from "../features/auth/AuthProvider";
+import { getHistorySessions, groupRealSessionsByDate } from "../features/history/history.service";
 import { cn } from "../lib/utils";
 
 type StatusFilter = "ALL" | HistoryStatus;
@@ -86,21 +86,46 @@ function interruptionLabel(count: number) {
 }
 
 export function History() {
+  const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("ALL");
-  const [expandedId, setExpandedId] = useState<string | null>(
-    historySessions[0]?.id ?? null,
-  );
+  const [dateRange, setDateRange] = useState<"week" | "all">("week");
+  const [sessions, setSessions] = useState<HistorySession[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(Boolean(user?.id));
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let active = true;
+    void getHistorySessions(user.id).then((result) => {
+      if (!active) return;
+      setSessions(result.data ?? []);
+      setError(result.error);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
 
   const groups = useMemo(() => {
-    const filtered =
-      activeFilter === "ALL"
-        ? historySessions
-        : historySessions.filter((session) => session.status === activeFilter);
-    return groupSessionsByDate(filtered);
-  }, [activeFilter]);
+    const weekStart = new Date();
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - 6);
+    const filtered = sessions.filter((session) => {
+      const statusMatches = activeFilter === "ALL" || session.status === activeFilter;
+      const dateMatches = dateRange === "all" || new Date(`${session.dateKey}T23:59:59`).getTime() >= weekStart.getTime();
+      return statusMatches && dateMatches;
+    });
+    return groupRealSessionsByDate(filtered);
+  }, [activeFilter, dateRange, sessions]);
 
   function toggle(id: string) {
     setExpandedId((current) => (current === id ? null : id));
+  }
+
+  if (loading) {
+    return <div className="flex min-h-[calc(100vh-92px)] items-center justify-center text-sm text-ink-600" role="status">Loading your focus history…</div>;
   }
 
   return (
@@ -125,6 +150,7 @@ export function History() {
           <p className="mt-4 max-w-[520px] text-[18px] leading-relaxed text-ink-600">
             Review your previous sessions and see your progress.
           </p>
+          {error && <p className="mt-2 text-[12px] text-danger" role="alert">{error}</p>}
         </header>
 
         <div
@@ -173,12 +199,13 @@ export function History() {
           </div>
           <button
             type="button"
+            onClick={() => setDateRange((current) => (current === "week" ? "all" : "week"))}
             className="inline-flex items-center justify-between gap-3 rounded-full border border-slate-200/80 bg-white px-4 py-2.5 text-[14px] font-semibold text-ink-800 transition-colors hover:bg-sky-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200 sm:w-auto"
             aria-label="Change date range"
           >
             <span className="flex items-center gap-2">
               <Clock3 size={16} className="text-sky-500" />
-              This week
+              {dateRange === "week" ? "This week" : "All time"}
             </span>
             <ChevronDown size={16} className="text-ink-600" />
           </button>

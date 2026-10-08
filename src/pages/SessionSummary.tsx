@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   ArrowRight,
@@ -15,19 +15,21 @@ import {
   Waves,
 } from "lucide-react";
 import { ReflowCharacter } from "../components/ReflowCharacter";
+import { useAuth } from "../features/auth/AuthProvider";
+import {
+  getFocusSessionDetails,
+  saveSessionFeedback,
+  type RecoveryActionRow,
+  type SessionFeedbackRow,
+} from "../features/focus-session/focus-session.service";
 
 export type SummaryState = {
+  sessionId: string;
+  status: string;
   goal: string;
   duration: number;
   actualSeconds: number;
-  interruptionCount?: number;
-};
-
-const defaultSummary: SummaryState = {
-  goal: "Finish the design system documentation",
-  duration: 25,
-  actualSeconds: 23 * 60,
-  interruptionCount: 3,
+  interruptionCount: number;
 };
 
 function formatDuration(seconds: number) {
@@ -36,18 +38,98 @@ function formatDuration(seconds: number) {
   return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
+function formatActionTime(value: string) {
+  return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+}
+
+function recoveryTitle(action: RecoveryActionRow) {
+  return action.action_type.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 export function SessionSummary() {
   const location = useLocation();
-  const summary = {
-    ...defaultSummary,
-    ...((location.state as SummaryState | null) ?? {}),
-  };
+  const { user } = useAuth();
+  const routeState = location.state as Partial<SummaryState> | null;
+  const [summary, setSummary] = useState<SummaryState | null>(
+    routeState?.sessionId && routeState.goal
+      ? (routeState as SummaryState)
+      : null,
+  );
+  const [recoveryActions, setRecoveryActions] = useState<RecoveryActionRow[]>([]);
+  const [feedback, setFeedback] = useState<SessionFeedbackRow | null>(null);
+  const [reflection, setReflection] = useState("");
+  const [reflectionOpen, setReflectionOpen] = useState(false);
+  const [loading, setLoading] = useState(Boolean(routeState?.sessionId && user?.id));
+  const [savingFeedback, setSavingFeedback] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const sessionId = routeState?.sessionId;
+
+  useEffect(() => {
+    if (!user?.id || !sessionId) {
+      return;
+    }
+
+    let active = true;
+    void (async () => {
+      const result = await getFocusSessionDetails(user.id, sessionId);
+      if (!active) return;
+      if (result.data) {
+        const row = result.data.session;
+        setSummary({
+          sessionId: row.id,
+          status: row.status,
+          goal: row.goal,
+          duration: row.planned_duration_minutes,
+          actualSeconds: Math.max(0, row.actual_duration_seconds ?? 0),
+          interruptionCount: Math.max(0, row.interruption_count ?? 0),
+        });
+        setRecoveryActions(result.data.recoveryActions);
+        setFeedback(result.data.feedback);
+        setReflection(result.data.feedback?.reflection ?? "");
+      }
+      setError(result.error);
+      setLoading(false);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [sessionId, user?.id]);
+
+  async function saveReflection() {
+    if (!user?.id || !summary?.sessionId || !reflection.trim()) return;
+    setSavingFeedback(true);
+    const result = await saveSessionFeedback(
+      user.id,
+      summary.sessionId,
+      reflection.trim(),
+    );
+    setFeedback(result.data);
+    setError(result.error);
+    setSavingFeedback(false);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[calc(100vh-92px)] items-center justify-center text-sm text-ink-600" role="status">
+        Loading your session summary…
+      </div>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <div className="flex min-h-[calc(100vh-92px)] items-center justify-center px-6 text-sm text-danger" role="alert">
+        {error ?? "This session summary is unavailable."}
+      </div>
+    );
+  }
+
   const plannedSeconds = summary.duration * 60;
   const completion = Math.min(
     100,
     Math.round((summary.actualSeconds / plannedSeconds) * 100),
   );
-  const [reflectionOpen, setReflectionOpen] = useState(false);
 
   return (
     <div className="relative isolate min-h-[calc(100vh-92px)] overflow-hidden">
@@ -89,7 +171,9 @@ export function SessionSummary() {
             Great job, you stayed focused!
           </h1>
           <p className="mt-4 max-w-[520px] text-[18px] leading-relaxed text-ink-600">
-            You completed your focus session. Every small step counts.
+            {summary.status === "completed"
+              ? "You completed your focus session. Every small step counts."
+              : "Your session ended early. Every intentional step still counts."}
           </p>
         </header>
 
@@ -122,7 +206,7 @@ export function SessionSummary() {
             <SummaryMetric
               icon={Waves}
               label="Interruptions"
-              value={`${summary.interruptionCount ?? 3}`}
+              value={`${summary.interruptionCount}`}
               detail="times"
               className="sm:pl-6"
               accent="red"
@@ -149,31 +233,22 @@ export function SessionSummary() {
               </div>
             </div>
             <div className="relative mt-6 space-y-5 pl-1">
-              <div
-                className="absolute bottom-3 left-[76px] top-3 w-px bg-sky-200"
-                aria-hidden="true"
-              />
-              <RecoveryItem
-                time="04:12"
-                title="Reported a distraction"
-                detail="Notified distraction to stay aware."
-                icon={Flag}
-                color="warning"
-              />
-              <RecoveryItem
-                time="07:35"
-                title="Used Rescue Mode"
-                detail="Took a short guided reset."
-                icon={RotateCcw}
-                color="purple"
-              />
-              <RecoveryItem
-                time="16:20"
-                title="Took a short break"
-                detail="Returned with a little more space."
-                icon={Coffee}
-                color="warning"
-              />
+              {recoveryActions.length > 0 ? (
+                recoveryActions.map((action) => (
+                  <RecoveryItem
+                    key={action.id}
+                    time={formatActionTime(action.started_at)}
+                    title={recoveryTitle(action)}
+                    detail={`Status: ${action.status}`}
+                    icon={action.action_type === "short_break" ? Coffee : RotateCcw}
+                    color={action.action_type === "short_break" ? "warning" : "purple"}
+                  />
+                ))
+              ) : (
+                <p className="rounded-xl bg-sky-50 px-4 py-4 text-[13px] text-ink-600">
+                  No recovery actions recorded for this session.
+                </p>
+              )}
             </div>
           </div>
 
@@ -206,13 +281,23 @@ export function SessionSummary() {
                 it up!
               </p>
             </div>
-            {reflectionOpen ? (
-              <textarea
-                autoFocus
-                placeholder="What helped you focus today?"
-                className="mt-4 min-h-20 w-full resize-none rounded-xl border border-sky-200 bg-white px-4 py-3 text-[14px] text-ink-950 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-                aria-label="Your reflection"
-              />
+            {reflectionOpen || feedback ? (
+              <>
+                <textarea
+                  autoFocus={reflectionOpen}
+                  value={reflection}
+                  onChange={(event) => setReflection(event.target.value)}
+                  onBlur={() => void saveReflection()}
+                  placeholder="What helped you focus today?"
+                  className="mt-4 min-h-20 w-full resize-none rounded-xl border border-sky-200 bg-white px-4 py-3 text-[14px] text-ink-950 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                  aria-label="Your reflection"
+                />
+                {(savingFeedback || error) && (
+                  <p className={error ? "mt-2 text-[12px] text-danger" : "mt-2 text-[12px] text-ink-600"} role={error ? "alert" : "status"}>
+                    {error ?? "Saving your reflection…"}
+                  </p>
+                )}
+              </>
             ) : (
               <button
                 type="button"

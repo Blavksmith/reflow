@@ -24,12 +24,14 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useTheme, type ThemePreference } from "../theme/ThemeProvider";
+import type { ThemePreference } from "../theme/ThemeProvider";
+import { useUserSettings } from "../features/settings/UserSettingsProvider";
+import type { AudioSetting } from "../features/settings/settings.types";
 import { cn } from "../lib/utils";
 
 type SettingsSection = "general" | "audio" | "privacy" | "adaptive";
 type Theme = ThemePreference;
-type AudioOption = "none" | "ambient" | "nature" | "focus";
+type AudioOption = AudioSetting;
 
 const settingsNavigation: Array<{
   id: SettingsSection;
@@ -81,7 +83,7 @@ const audioOptions: Array<{
   { value: "none", label: "None", icon: VolumeX },
   { value: "ambient", label: "Ambient", icon: SlidersHorizontal },
   { value: "nature", label: "Nature", icon: Leaf },
-  { value: "focus", label: "Focus Sound", icon: Music2 },
+  { value: "focus_sound", label: "Focus Sound", icon: Music2 },
 ];
 
 function Toggle({
@@ -339,19 +341,15 @@ function AudioPicker({
 }
 
 function GeneralSettings() {
-  const { theme, setTheme } = useTheme();
-  const [sessionReminders, setSessionReminders] = useState(true);
-  const [progressUpdates, setProgressUpdates] = useState(true);
-  const [announcements, setAnnouncements] = useState(false);
-  const [focusReminder, setFocusReminder] = useState(true);
-  const [focusInterval, setFocusInterval] = useState("10 minutes");
-  const [breakReminder, setBreakReminder] = useState(true);
-  const [breakInterval, setBreakInterval] = useState("25 minutes");
+  const { settings, updateSetting } = useUserSettings();
 
   return (
     <div className="space-y-6">
       <Subsection title="Appearance" description="Choose how Reflow looks and feels.">
-        <ThemePicker value={theme} onChange={setTheme} />
+        <ThemePicker
+          value={settings.theme}
+          onChange={(value) => void updateSetting("theme", value)}
+        />
       </Subsection>
 
       <Subsection
@@ -365,8 +363,8 @@ function GeneralSettings() {
             description="Get notified before your focus session starts."
           >
             <Toggle
-              checked={sessionReminders}
-              onChange={setSessionReminders}
+              checked={settings.session_reminders_enabled}
+              onChange={(value) => void updateSetting("session_reminders_enabled", value)}
               label="Session reminders"
             />
           </SettingRow>
@@ -376,8 +374,8 @@ function GeneralSettings() {
             description="Receive updates about your focus progress."
           >
             <Toggle
-              checked={progressUpdates}
-              onChange={setProgressUpdates}
+              checked={settings.progress_updates_enabled}
+              onChange={(value) => void updateSetting("progress_updates_enabled", value)}
               label="Progress updates"
             />
           </SettingRow>
@@ -387,8 +385,8 @@ function GeneralSettings() {
             description="Get the latest features and news from Reflow."
           >
             <Toggle
-              checked={announcements}
-              onChange={setAnnouncements}
+              checked={settings.app_announcements_enabled}
+              onChange={(value) => void updateSetting("app_announcements_enabled", value)}
               label="App announcements"
             />
           </SettingRow>
@@ -406,8 +404,8 @@ function GeneralSettings() {
             description="Show a gentle reminder if you’re off focus."
           >
             <Toggle
-              checked={focusReminder}
-              onChange={setFocusReminder}
+              checked={settings.focus_reminder_enabled}
+              onChange={(value) => void updateSetting("focus_reminder_enabled", value)}
               label="Focus reminder"
             />
           </SettingRow>
@@ -423,8 +421,10 @@ function GeneralSettings() {
             <SelectControl
               id="focus-interval"
               label="Focus reminder interval"
-              value={focusInterval}
-              onChange={setFocusInterval}
+              value={`${settings.focus_reminder_interval_minutes} minutes`}
+              onChange={(value) =>
+                void updateSetting("focus_reminder_interval_minutes", Number.parseInt(value, 10))
+              }
               options={["5 minutes", "10 minutes", "15 minutes", "20 minutes"]}
             />
           </div>
@@ -442,8 +442,8 @@ function GeneralSettings() {
             description="Receive a reminder to take a break."
           >
             <Toggle
-              checked={breakReminder}
-              onChange={setBreakReminder}
+              checked={settings.break_reminder_enabled}
+              onChange={(value) => void updateSetting("break_reminder_enabled", value)}
               label="Break reminder"
             />
           </SettingRow>
@@ -459,8 +459,10 @@ function GeneralSettings() {
             <SelectControl
               id="break-interval"
               label="Break reminder interval"
-              value={breakInterval}
-              onChange={setBreakInterval}
+              value={`${settings.break_reminder_interval_minutes} minutes`}
+              onChange={(value) =>
+                void updateSetting("break_reminder_interval_minutes", Number.parseInt(value, 10))
+              }
               options={["15 minutes", "25 minutes", "30 minutes", "45 minutes"]}
             />
           </div>
@@ -471,10 +473,7 @@ function GeneralSettings() {
 }
 
 function AudioSettings() {
-  const [defaultSound, setDefaultSound] = useState<AudioOption>("ambient");
-  const [volume, setVolume] = useState(70);
-  const [rememberAudio, setRememberAudio] = useState(true);
-  const [autoStart, setAutoStart] = useState(true);
+  const { settings, updateSetting } = useUserSettings();
 
   return (
     <div className="space-y-6">
@@ -482,7 +481,10 @@ function AudioSettings() {
         title="Default sound"
         description="Choose the sound that plays automatically during a session."
       >
-        <AudioPicker value={defaultSound} onChange={setDefaultSound} />
+        <AudioPicker
+          value={settings.default_sound}
+          onChange={(value) => void updateSetting("default_sound", value)}
+        />
       </Subsection>
 
       <Subsection
@@ -501,11 +503,13 @@ function AudioSettings() {
             type="range"
             min={0}
             max={100}
-            value={volume}
-            onChange={(event) => setVolume(Number(event.target.value))}
+            value={settings.default_volume}
+            onChange={(event) =>
+              void updateSetting("default_volume", Number(event.target.value))
+            }
             className="h-1.5 min-w-0 flex-1 accent-sky-500"
           />
-          <span className="w-9 text-right">{volume}%</span>
+          <span className="w-9 text-right">{settings.default_volume}%</span>
         </label>
       </Subsection>
 
@@ -520,8 +524,8 @@ function AudioSettings() {
             description="Keep your latest sound and volume choices."
           >
             <Toggle
-              checked={rememberAudio}
-              onChange={setRememberAudio}
+              checked={settings.remember_audio_settings}
+              onChange={(value) => void updateSetting("remember_audio_settings", value)}
               label="Remember audio settings"
             />
           </SettingRow>
@@ -531,8 +535,8 @@ function AudioSettings() {
             description="Start your selected sound when a session begins."
           >
             <Toggle
-              checked={autoStart}
-              onChange={setAutoStart}
+              checked={settings.auto_start_audio}
+              onChange={(value) => void updateSetting("auto_start_audio", value)}
               label="Automatically start audio when a session begins"
             />
           </SettingRow>
@@ -543,10 +547,7 @@ function AudioSettings() {
 }
 
 function PrivacySettings() {
-  const [monitoring, setMonitoring] = useState(false);
-  const [preview, setPreview] = useState(false);
-  const [blur, setBlur] = useState(true);
-  const [useSignals, setUseSignals] = useState(true);
+  const { settings, updateSetting } = useUserSettings();
 
   return (
     <div className="space-y-6">
@@ -561,8 +562,8 @@ function PrivacySettings() {
             description="Use optional camera signals to understand your focus patterns."
           >
             <Toggle
-              checked={monitoring}
-              onChange={setMonitoring}
+              checked={settings.camera_monitoring_enabled}
+              onChange={(value) => void updateSetting("camera_monitoring_enabled", value)}
               label="Camera monitoring"
             />
           </SettingRow>
@@ -572,8 +573,8 @@ function PrivacySettings() {
             description="Show a small preview while camera monitoring is enabled."
           >
             <Toggle
-              checked={preview}
-              onChange={setPreview}
+              checked={settings.camera_preview_enabled}
+              onChange={(value) => void updateSetting("camera_preview_enabled", value)}
               label="Camera preview"
             />
           </SettingRow>
@@ -583,8 +584,10 @@ function PrivacySettings() {
             description="Keep your surroundings soft and private in the preview."
           >
             <Toggle
-              checked={blur}
-              onChange={setBlur}
+              checked={settings.camera_background_blur_enabled}
+              onChange={(value) =>
+                void updateSetting("camera_background_blur_enabled", value)
+              }
               label="Background blur"
             />
           </SettingRow>
@@ -602,8 +605,10 @@ function PrivacySettings() {
             description="Allow previous camera signals to improve focus insights."
           >
             <Toggle
-              checked={useSignals}
-              onChange={setUseSignals}
+              checked={settings.allow_camera_signals_for_insights}
+              onChange={(value) =>
+                void updateSetting("allow_camera_signals_for_insights", value)
+              }
               label="Use camera signals for focus insights"
             />
           </SettingRow>
@@ -634,9 +639,7 @@ function PrivacySettings() {
 }
 
 function AdaptiveSettings() {
-  const [adaptiveFocus, setAdaptiveFocus] = useState(true);
-  const [smartLength, setSmartLength] = useState(true);
-  const [sessionHistory, setSessionHistory] = useState(true);
+  const { settings, updateSetting } = useUserSettings();
 
   return (
     <div className="space-y-6">
@@ -655,8 +658,8 @@ function AdaptiveSettings() {
             description="Enable personalized focus recommendations."
           >
             <Toggle
-              checked={adaptiveFocus}
-              onChange={setAdaptiveFocus}
+              checked={settings.adaptive_focus_enabled}
+              onChange={(value) => void updateSetting("adaptive_focus_enabled", value)}
               label="Adaptive focus"
             />
           </SettingRow>
@@ -674,8 +677,10 @@ function AdaptiveSettings() {
             description="Recommend a session duration based on previous focus patterns."
           >
             <Toggle
-              checked={smartLength}
-              onChange={setSmartLength}
+              checked={settings.smart_session_length_enabled}
+              onChange={(value) =>
+                void updateSetting("smart_session_length_enabled", value)
+              }
               label="Smart session length"
             />
           </SettingRow>
@@ -693,8 +698,10 @@ function AdaptiveSettings() {
             description="Allow previous session data to improve future recommendations."
           >
             <Toggle
-              checked={sessionHistory}
-              onChange={setSessionHistory}
+              checked={settings.use_session_history_for_recommendations}
+              onChange={(value) =>
+                void updateSetting("use_session_history_for_recommendations", value)
+              }
               label="Use session history"
             />
           </SettingRow>
@@ -720,6 +727,12 @@ function SettingsContent({ section }: { section: SettingsSection }) {
 
 export function Settings() {
   const [activeSection, setActiveSection] = useState<SettingsSection>("general");
+  const {
+    loading: settingsLoading,
+    error: settingsError,
+    updatingKey,
+    savedKey,
+  } = useUserSettings();
   const activeNavigation = settingsNavigation.find(
     (item) => item.id === activeSection,
   );
@@ -747,6 +760,23 @@ export function Settings() {
           <p className="mt-4 text-[18px] leading-relaxed text-ink-600">
             Adjust your preferences to make Reflow work best for you.
           </p>
+          {(settingsLoading || updatingKey || savedKey || settingsError) && (
+            <p
+              className={cn(
+                "mt-3 text-[12px] font-medium",
+                settingsError ? "text-danger" : "text-ink-600",
+              )}
+              role={settingsError ? "status" : undefined}
+              aria-live="polite"
+            >
+              {settingsError ??
+                (updatingKey
+                  ? "Saving your preference…"
+                  : savedKey
+                    ? "Preference saved."
+                    : "Loading your preferences…")}
+            </p>
+          )}
         </header>
 
         <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">

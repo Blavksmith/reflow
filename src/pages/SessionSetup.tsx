@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -18,6 +18,10 @@ import {
   VolumeX,
 } from "lucide-react";
 import { ReflowCharacter } from "../components/ReflowCharacter";
+import { useAuth } from "../features/auth/AuthProvider";
+import { getAdaptiveRecommendation } from "../features/dashboard/dashboard.service";
+import { useFocusSession } from "../features/focus-session/FocusSessionProvider";
+import { useUserSettings } from "../features/settings/UserSettingsProvider";
 import { cn } from "../lib/utils";
 
 const durationOptions = [15, 25, 45, 60] as const;
@@ -102,6 +106,10 @@ function Toggle({
 
 export function SessionSetup() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { createSession, creating: sessionCreating, error: sessionError } = useFocusSession();
+  const { settings, loading: settingsLoading } = useUserSettings();
+  const preferenceEditedRef = useRef(false);
   const [goal, setGoal] = useState("");
   const [duration, setDuration] = useState<number>(25);
   const [customDuration, setCustomDuration] = useState("30");
@@ -110,6 +118,36 @@ export function SessionSetup() {
   const [volume, setVolume] = useState(70);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const [recommendationMinutes, setRecommendationMinutes] = useState<number | null>(null);
+
+  useEffect(() => {
+    const enabled =
+      settings.adaptive_focus_enabled &&
+      settings.smart_session_length_enabled &&
+      settings.use_session_history_for_recommendations;
+    if (!user?.id || settingsLoading || !enabled) {
+      queueMicrotask(() => setRecommendationMinutes(null));
+      return;
+    }
+    let active = true;
+    void getAdaptiveRecommendation(user.id).then((recommendation) => {
+      if (active) setRecommendationMinutes(recommendation?.recommendedDurationMinutes ?? null);
+    });
+    return () => {
+      active = false;
+    };
+  }, [settings, settingsLoading, user?.id]);
+
+  useEffect(() => {
+    if (settingsLoading || preferenceEditedRef.current) {
+      return;
+    }
+
+    setAudioEnabled(settings.auto_start_audio && settings.default_sound !== "none");
+    setAudioCategory(settings.default_sound === "focus_sound" ? "focus" : settings.default_sound);
+    setVolume(settings.default_volume);
+    setCameraEnabled(settings.camera_monitoring_enabled);
+  }, [settings, settingsLoading]);
 
   const selectedDuration =
     duration === 0 ? Number(customDuration) || 0 : duration;
@@ -121,22 +159,48 @@ export function SessionSetup() {
     [audioCategory],
   );
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function setAudioPreference(nextValue: boolean) {
+    preferenceEditedRef.current = true;
+    setAudioEnabled(nextValue);
+  }
+
+  function setAudioCategoryPreference(nextValue: string) {
+    preferenceEditedRef.current = true;
+    setAudioCategory(nextValue);
+  }
+
+  function setVolumePreference(nextValue: number) {
+    preferenceEditedRef.current = true;
+    setVolume(nextValue);
+  }
+
+  function setCameraPreference(nextValue: boolean) {
+    preferenceEditedRef.current = true;
+    setCameraEnabled(nextValue);
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!goal.trim() || selectedDuration < 1) {
       setShowValidation(true);
       return;
     }
 
+    const session = await createSession({
+      goal: goal.trim(),
+      durationMinutes: selectedDuration,
+      audioEnabled,
+      audioCategory,
+      audioVolume: volume,
+      cameraEnabled,
+    });
+
+    if (!session) {
+      return;
+    }
+
     navigate("/session", {
-      state: {
-        goal: goal.trim(),
-        duration: selectedDuration,
-        audioEnabled,
-        audioCategory,
-        volume,
-        cameraEnabled,
-      },
+      state: { sessionId: session.id },
     });
   }
 
@@ -307,7 +371,7 @@ export function SessionSetup() {
                 </span>
                 <Toggle
                   checked={audioEnabled}
-                  onChange={setAudioEnabled}
+                  onChange={setAudioPreference}
                   label="Enable background audio"
                 />
               </div>
@@ -323,7 +387,7 @@ export function SessionSetup() {
                     type="button"
                     disabled={!audioEnabled}
                     aria-pressed={audioCategory === value}
-                    onClick={() => setAudioCategory(value)}
+                    onClick={() => setAudioCategoryPreference(value)}
                     className={cn(
                       "relative flex min-h-[70px] flex-col items-center justify-center rounded-xl border px-2 py-2 text-[12px] transition-colors disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200",
                       audioCategory === value && audioEnabled
@@ -357,7 +421,7 @@ export function SessionSetup() {
                   max={100}
                   value={volume}
                   disabled={!audioEnabled}
-                  onChange={(event) => setVolume(Number(event.target.value))}
+                  onChange={(event) => setVolumePreference(Number(event.target.value))}
                   className="h-1.5 min-w-0 flex-1 accent-sky-500 disabled:cursor-not-allowed"
                 />
                 <span className="w-9 text-right">{volume}%</span>
@@ -384,7 +448,7 @@ export function SessionSetup() {
                 </div>
                 <Toggle
                   checked={cameraEnabled}
-                  onChange={setCameraEnabled}
+                  onChange={setCameraPreference}
                   label="Enable camera monitoring"
                   id="camera-monitoring-toggle"
                 />
@@ -441,7 +505,10 @@ export function SessionSetup() {
               </div>
               <button
                 type="button"
-                onClick={() => setDuration(25)}
+                onClick={() => {
+                  if (recommendationMinutes) setDuration(recommendationMinutes);
+                }}
+                disabled={!recommendationMinutes}
                 className="group theme-recommendation-card relative isolate mt-4 min-h-[158px] w-full overflow-hidden rounded-2xl border border-sky-200/80 p-5 text-left transition-all hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
               >
                 <span className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full bg-white/35 transition-transform duration-300 group-hover:scale-110" />
@@ -454,7 +521,7 @@ export function SessionSetup() {
                     <Clock3 size={21} />
                   </span>
                   <span className="text-[30px] font-semibold tracking-[-0.045em] text-ink-950">
-                    25 minutes
+                    {recommendationMinutes ? `${recommendationMinutes} minutes` : "No recommendation yet"}
                   </span>
                 </span>
                 <span className="relative z-10 mt-2 block max-w-[245px] text-[14px] leading-relaxed text-ink-600">
@@ -542,11 +609,11 @@ export function SessionSetup() {
             <div className="flex flex-col gap-2">
               <button
                 type="submit"
-                disabled={!goal.trim() || selectedDuration < 1}
+                disabled={sessionCreating || !goal.trim() || selectedDuration < 1}
                 className="inline-flex min-h-14 items-center justify-center gap-4 rounded-xl bg-primary-cta-gradient px-5 text-[16px] font-semibold text-white shadow-control transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:bg-none disabled:text-ink-400 disabled:shadow-none focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
               >
                 <Play size={20} fill="currentColor" />
-                Start Session
+                {sessionCreating ? "Starting…" : "Start Session"}
                 <ChevronRight size={20} />
               </button>
               <Link
@@ -556,8 +623,8 @@ export function SessionSetup() {
                 Cancel
               </Link>
             </div>
-            <p className="text-center text-[11px] text-ink-400">
-              Your session starts as soon as you continue.
+            <p className={cn("text-center text-[11px]", sessionError ? "text-danger" : "text-ink-400")} role={sessionError ? "alert" : undefined}>
+              {sessionError ?? "Your session starts as soon as you continue."}
             </p>
           </aside>
         </form>

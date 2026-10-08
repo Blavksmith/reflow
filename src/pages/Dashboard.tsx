@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -13,12 +14,9 @@ import {
   Sparkles,
   TriangleAlert,
 } from "lucide-react";
-import {
-  adaptiveRecommendation,
-  overviewMetrics,
-  recentSessions,
-} from "../data/dashboard";
+import { getDashboardData, type DashboardData } from "../features/dashboard/dashboard.service";
 import { useAuth } from "../features/auth/AuthProvider";
+import { useProfile } from "../features/profile/ProfileProvider";
 import type { RecentSession } from "../types/dashboard";
 import { cn } from "../lib/utils";
 import { ReflowCharacter } from "../components/ReflowCharacter";
@@ -42,13 +40,62 @@ const overviewIcons = {
   interruptions: TriangleAlert,
 } as const;
 
+const emptyDashboardData: DashboardData = {
+  metrics: [
+    { id: "focus-time", label: "Total Focus Time", value: "—", change: "—", tone: "positive", icon: "clock" },
+    { id: "completed-sessions", label: "Completed Sessions", value: "—", change: "—", tone: "positive", icon: "completed" },
+    { id: "interruptions", label: "Interruptions", value: "—", change: "—", tone: "negative", icon: "interruptions" },
+  ],
+  recentSessions: [],
+  recommendation: null,
+};
+
 export function Dashboard() {
   const { user } = useAuth();
-  const displayName =
-    typeof user?.user_metadata?.display_name === "string"
-      ? user.user_metadata.display_name
-      : user?.email?.split("@")[0] ?? "there";
-  const greeting = user ? `Welcome back, ${displayName}!` : "Welcome to Reflow";
+  const { profile, loading: profileLoading } = useProfile();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const displayName = profile?.display_name?.trim() ?? "";
+  const greeting = !user
+    ? "Welcome to Reflow"
+    : profileLoading
+      ? "Welcome back"
+      : displayName
+        ? `Welcome back, ${displayName}!`
+        : "Welcome back!";
+
+  useEffect(() => {
+    let active = true;
+    if (!user?.id) {
+      queueMicrotask(() => {
+        setDashboardData(null);
+        setDashboardError(null);
+        setDashboardLoading(false);
+      });
+      return () => {
+        active = false;
+      };
+    }
+
+    void (async () => {
+      setDashboardLoading(true);
+      const result = await getDashboardData(user.id);
+      if (!active) return;
+      setDashboardData(result.data);
+      setDashboardError(result.error);
+      setDashboardLoading(false);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
+  const data = dashboardData ?? emptyDashboardData;
+  const metrics = data.metrics;
+  const recentSessions = data.recentSessions;
+  const recommendation = data.recommendation;
 
   return (
     <div className="mx-auto max-w-[1320px] px-6 pb-12 pt-9 lg:px-10 xl:px-12">
@@ -63,6 +110,11 @@ export function Dashboard() {
           <p className="mt-4 text-[18px] leading-relaxed text-ink-600">
             A focused day is a collection of small, intentional moments.
           </p>
+          {user && (dashboardLoading || dashboardError) && (
+            <p className={cn("mt-2 text-[12px]", dashboardError ? "text-danger" : "text-ink-600")} role="status">
+              {dashboardError ?? "Loading your focus data…"}
+            </p>
+          )}
         </div>
         <div className="hidden items-center gap-3 lg:flex">
           <div className="rounded-2xl bg-white px-6 py-5 text-[14px] leading-relaxed text-ink-600 shadow-soft">
@@ -108,7 +160,7 @@ export function Dashboard() {
                   Recommended for you
                   <br />
                   <strong className="text-[16px] text-ink-950">
-                    {adaptiveRecommendation.recommendedDurationMinutes} minutes
+                    {recommendation ? `${recommendation.recommendedDurationMinutes} minutes` : "—"}
                   </strong>
                 </span>
               </span>
@@ -151,7 +203,7 @@ export function Dashboard() {
               </button>
             </div>
             <div className="overview-metrics grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-              {overviewMetrics.map((metric) => {
+              {metrics.map((metric) => {
                 const Icon = overviewIcons[metric.icon];
                 const negative = metric.tone === "negative";
                 return (
@@ -209,11 +261,10 @@ export function Dashboard() {
                 Adaptive Recommendation
               </h2>
               <p className="mt-1 text-[14px] font-semibold text-ink-950">
-                A 25-minute session is a good fit today.
+                {recommendation?.explanation ?? "No focus recommendation yet."}
               </p>
               <p className="mt-1 line-clamp-2 text-[13px] text-ink-600">
-                You’ve been completing most of your sessions this week. Keep the
-                momentum going!
+                {recommendation?.detail ?? "Complete a focus session to build your personal data."}
               </p>
             </div>
             <button
@@ -281,7 +332,7 @@ export function Dashboard() {
             })
           ) : (
             <div className="px-6 py-12 text-center text-sm text-ink-600">
-              Your completed sessions will appear here.
+              No focus sessions yet. Start your first session to see it here.
             </div>
           )}
         </section>
