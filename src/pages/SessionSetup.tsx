@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { ReflowCharacter } from "../components/ReflowCharacter";
 import { useAuth } from "../features/auth/AuthProvider";
+import { requestCameraStream, stopCameraStream, type CameraPermissionStatus } from "../features/vision/camera.permission";
 import { getAdaptiveRecommendation } from "../features/dashboard/dashboard.service";
 import { useFocusSession } from "../features/focus-session/FocusSessionProvider";
 import { useUserSettings } from "../features/settings/UserSettingsProvider";
@@ -119,6 +120,14 @@ export function SessionSetup() {
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [recommendationMinutes, setRecommendationMinutes] = useState<number | null>(null);
+  const [cameraStatus, setCameraStatus] = useState<CameraPermissionStatus>("idle");
+  const [isStarting, setIsStarting] = useState(false);
+  const cameraStatusRef = useRef<CameraPermissionStatus>("idle");
+
+  function updateCameraStatus(nextStatus: CameraPermissionStatus) {
+    cameraStatusRef.current = nextStatus;
+    setCameraStatus(nextStatus);
+  }
 
   useEffect(() => {
     const enabled =
@@ -149,6 +158,14 @@ export function SessionSetup() {
     setCameraEnabled(settings.camera_monitoring_enabled);
   }, [settings, settingsLoading]);
 
+  useEffect(() => {
+    return () => {
+      if (cameraStatusRef.current === "requesting") {
+        stopCameraStream();
+      }
+    };
+  }, []);
+
   const selectedDuration =
     duration === 0 ? Number(customDuration) || 0 : duration;
   const durationLabel =
@@ -174,16 +191,41 @@ export function SessionSetup() {
     setVolume(nextValue);
   }
 
-  function setCameraPreference(nextValue: boolean) {
+  async function setCameraPreference(nextValue: boolean) {
     preferenceEditedRef.current = true;
-    setCameraEnabled(nextValue);
+    if (!nextValue) {
+      stopCameraStream();
+      updateCameraStatus("idle");
+      setCameraEnabled(false);
+      return;
+    }
+
+    setCameraEnabled(true);
+    updateCameraStatus("requesting");
+    const result = await requestCameraStream();
+    updateCameraStatus(result.status);
+    if (result.status !== "granted") {
+      setCameraEnabled(false);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!goal.trim() || selectedDuration < 1) {
+    if (isStarting || !goal.trim() || selectedDuration < 1) {
       setShowValidation(true);
       return;
+    }
+
+    setIsStarting(true);
+    let effectiveCameraEnabled = cameraEnabled;
+    if (cameraEnabled) {
+      updateCameraStatus("requesting");
+      const permission = await requestCameraStream();
+      updateCameraStatus(permission.status);
+      effectiveCameraEnabled = permission.status === "granted";
+      if (!effectiveCameraEnabled) {
+        setCameraEnabled(false);
+      }
     }
 
     const session = await createSession({
@@ -192,9 +234,10 @@ export function SessionSetup() {
       audioEnabled,
       audioCategory,
       audioVolume: volume,
-      cameraEnabled,
+      cameraEnabled: effectiveCameraEnabled,
     });
 
+    setIsStarting(false);
     if (!session) {
       return;
     }
@@ -466,8 +509,16 @@ export function SessionSetup() {
                   uploading raw video.
                 </span>
               </div>
-              <p className="mt-3 text-[11px] text-ink-400">
-                Camera access is not requested in this frontend-only increment.
+              <p className="mt-3 text-[11px] text-ink-400" role="status" aria-live="polite">
+                {cameraStatus === "granted"
+                  ? "Camera is ready for this session."
+                  : cameraStatus === "requesting"
+                    ? "Requesting camera permission…"
+                    : cameraStatus === "denied"
+                      ? "Camera permission was denied. You can continue without camera monitoring."
+                      : cameraStatus === "unavailable"
+                        ? "Camera is unavailable. You can continue without camera monitoring."
+                        : "Camera permission is requested only when monitoring is enabled."}
               </p>
             </SetupCard>
           </div>
@@ -609,11 +660,11 @@ export function SessionSetup() {
             <div className="flex flex-col gap-2">
               <button
                 type="submit"
-                disabled={sessionCreating || !goal.trim() || selectedDuration < 1}
+                disabled={isStarting || sessionCreating || !goal.trim() || selectedDuration < 1}
                 className="inline-flex min-h-14 items-center justify-center gap-4 rounded-xl bg-primary-cta-gradient px-5 text-[16px] font-semibold text-white shadow-control transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:bg-none disabled:text-ink-400 disabled:shadow-none focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
               >
                 <Play size={20} fill="currentColor" />
-                {sessionCreating ? "Starting…" : "Start Session"}
+                {isStarting || sessionCreating ? "Starting…" : "Start Session"}
                 <ChevronRight size={20} />
               </button>
               <Link

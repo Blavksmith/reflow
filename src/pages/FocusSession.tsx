@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import { ReflowCharacter } from "../components/ReflowCharacter";
 import { RescueMode } from "../components/RescueMode";
+import { CameraVisionController, type CameraVisionStatus } from "../features/vision/camera.controller";
+import { DistractionDetector } from "../features/vision/distraction.logic";
+import { requestCameraStream, stopCameraStream } from "../features/vision/camera.permission";
 import { useFocusSession } from "../features/focus-session/FocusSessionProvider";
 import { useUserSettings } from "../features/settings/UserSettingsProvider";
 import type { SummaryState } from "./SessionSummary";
@@ -131,6 +134,7 @@ export function FocusSession() {
   const remaining = activeSession?.remainingSeconds ?? totalSeconds;
   const sessionStatus = activeSession?.status ?? "IDLE";
   const isPaused = sessionStatus === "PAUSED";
+  const hasActiveSession = Boolean(activeSession);
   const [isEnding, setIsEnding] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(setup.audioEnabled);
   const [audioCategory, setAudioCategory] = useState(setup.audioCategory);
@@ -142,6 +146,84 @@ export function FocusSession() {
   const [recoverySelected, setRecoverySelected] = useState(false);
   const [recoveryCompleted, setRecoveryCompleted] = useState(false);
   const endTimeoutRef = useRef<number | null>(null);
+  const [cameraVisionStatus, setCameraVisionStatus] = useState<CameraVisionStatus>("idle");
+  const [facePresent, setFacePresent] = useState<boolean | null>(null);
+  const [distractionAlertVisible, setDistractionAlertVisible] = useState(false);
+  const cameraVisionRef = useRef<CameraVisionController | null>(null);
+  const distractionDetectorRef = useRef<DistractionDetector | null>(null);
+
+  useEffect(() => {
+    if (!hasActiveSession || sessionStatus !== "ACTIVE" || !cameraEnabled) {
+      cameraVisionRef.current?.stop();
+      cameraVisionRef.current = null;
+      distractionDetectorRef.current?.dispose();
+      distractionDetectorRef.current = null;
+      queueMicrotask(() => {
+        setCameraVisionStatus("stopped");
+        setFacePresent(null);
+        setDistractionAlertVisible(false);
+      });
+      stopCameraStream();
+      return;
+    }
+
+    let active = true;
+    const detector = new DistractionDetector(
+      () => {
+        if (!active) return;
+        setDistractionAlertVisible(true);
+        reportDistraction();
+      },
+      (state) => {
+        if (active && state === "normal") setDistractionAlertVisible(false);
+      },
+    );
+    distractionDetectorRef.current = detector;
+
+    void requestCameraStream().then((permission) => {
+      if (!active || permission.status !== "granted" || !permission.stream) {
+        if (active) {
+          setCameraVisionStatus(permission.status === "denied" ? "permission_denied" : "error");
+          setCameraEnabled(false);
+          updatePreferences({ cameraEnabled: false });
+        }
+        return;
+      }
+
+      const controller = new CameraVisionController(
+        (result) => {
+          if (active) {
+            setFacePresent(result.facePresent);
+            detector.observe(result);
+          }
+        },
+        (status) => {
+          if (!active) return;
+          setCameraVisionStatus(status);
+          if (status === "error" || status === "permission_denied") {
+            detector.reset();
+            setDistractionAlertVisible(false);
+            setCameraEnabled(false);
+            updatePreferences({ cameraEnabled: false });
+            stopCameraStream();
+          }
+        },
+      );
+      cameraVisionRef.current = controller;
+      void controller.start(permission.stream);
+    });
+
+    return () => {
+      active = false;
+      detector.dispose();
+      distractionDetectorRef.current = null;
+      cameraVisionRef.current?.stop();
+      cameraVisionRef.current = null;
+      setFacePresent(null);
+      setDistractionAlertVisible(false);
+      stopCameraStream();
+    };
+  }, [cameraEnabled, hasActiveSession, reportDistraction, sessionStatus, updatePreferences]);
 
   useEffect(() => {
     if (
@@ -272,10 +354,19 @@ export function FocusSession() {
     syncRememberedAudio(audioEnabled, audioCategory, nextValue);
   }
 
-  function toggleCamera() {
+  async function toggleCamera() {
     const nextValue = !cameraEnabled;
-    setCameraEnabled(nextValue);
-    updatePreferences({ cameraEnabled: nextValue });
+    if (!nextValue) {
+      stopCameraStream();
+      setCameraEnabled(false);
+      updatePreferences({ cameraEnabled: false });
+      return;
+    }
+
+    const result = await requestCameraStream();
+    const granted = result.status === "granted";
+    setCameraEnabled(granted);
+    updatePreferences({ cameraEnabled: granted });
   }
 
   function recoveryTypeForActivity(activity: "break" | "hydrate" | "stretch" | "environment") {
@@ -802,9 +893,24 @@ export function FocusSession() {
 
                   <br />
 
-                  {cameraEnabled
-                    ? "Monitoring is optional and no raw video is stored."
-                    : "You can focus without camera monitoring."}
+                  {cameraVisionStatus === "running"
+                    ? facePresent === null
+                      ? "Detecting face…"
+                      : facePresent
+                        ? "Face detected."
+                        : "No face detected."
+                    : cameraVisionStatus === "initializing"
+                      ? "Starting face detection…"
+                      : cameraVisionStatus === "error"
+                        ? "Face detection unavailable; session continues without detection."
+                        : cameraEnabled
+                          ? "Camera is enabled."
+                          : "You can focus without camera monitoring."}
+                  {distractionAlertVisible && (
+                    <span className="mt-2 block text-warning" role="status" aria-live="polite">
+                      Take a gentle reset if it helps. Your timer continues.
+                    </span>
+                  )}
                 </span>
               </div>
             </section>
